@@ -25,7 +25,7 @@ The retry policy handles errors such as OverLoadedException (which may occur due
         * On Ubuntu, you can run `sudo apt-get install git` to install Git.
 
 ## Running this sample
-1. Clone this repository using `git clone git@github.com:Azure-Samples/azure-cosmos-db-cassandra-java-retry-sample.git cosmosdb`.
+1. Clone this repository using `git clone git@github.com:Azure-Samples/azure-cosmos-db-cassandra-java-retry-sample-v4.git cosmosdb`.
 
 2. Change directories to the repo using `cd cosmosdb/java-examples`
 
