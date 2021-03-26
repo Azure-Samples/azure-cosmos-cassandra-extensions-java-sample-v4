@@ -1,13 +1,17 @@
 package com.microsoft.azure.cosmosdb.cassandra.examples;
 
 import java.io.IOException;
+import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+
 import com.microsoft.azure.cosmosdb.cassandra.repository.UserRepository;
 import com.microsoft.azure.cosmosdb.cassandra.util.CassandraUtils;
 import com.microsoft.azure.cosmosdb.cassandra.util.Configurations;
@@ -35,20 +39,17 @@ public class UserProfile {
     AtomicLong insertCount = new AtomicLong(0);
     AtomicLong totalLatency = new AtomicLong(0);
     AtomicLong averageLatency = new AtomicLong(0);
-    Boolean loadBalanceRegions = false;
+    AtomicLong totalReadLatency = new AtomicLong(0);
+    AtomicLong averageReadLatency = new AtomicLong(0);
+    //AtomicReferenceArray<String> docIDs = new AtomicReferenceArray<String>(NUMBER_OF_THREADS * NUMBER_OF_WRITES_PER_THREAD);
+    Queue<String> docIDs = new ConcurrentLinkedQueue<String>();
 
     private static int PORT;
     private static String region1ContactPoint;
-    private static String region2ContactPoint;
-    private static String region1;
-    private static String region2;
     static {
         try {
             PORT = Short.parseShort(config.getProperty("cassandra_port"));
-            region1ContactPoint= config.getProperty("cassandra_region1ContactPoint");
-            region2ContactPoint= config.getProperty("cassandra_region2ContactPoint");
-            region1= config.getProperty("cassandra_region1");
-            region2= config.getProperty("cassandra_region2");
+            region1ContactPoint= config.getProperty("contactPoint");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -58,23 +59,21 @@ public class UserProfile {
 
         CassandraUtils utils = new CassandraUtils();
         UserProfile u = new UserProfile();
-        CqlSession cassandraSessionWithRetry1 = utils.getSession(region1ContactPoint, PORT,  region1);
-        CqlSession cassandraSessionWithRetry2 = utils.getSession(region2ContactPoint, PORT,  region2);
+        CqlSession session = utils.getSession(region1ContactPoint, PORT);
        
-        UserRepository region1 = new UserRepository(cassandraSessionWithRetry1);
-        UserRepository region2 = new UserRepository(cassandraSessionWithRetry2);
+        UserRepository repository = new UserRepository(session);
         String keyspace = "uprofile";
         String table = "user";
         try {
-            // Create keyspace and table in cassandra database
-            region1.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
+            //Create keyspace and table in cassandra database
+            repository.deleteTable("DROP KEYSPACE " + keyspace + "");
             System.out.println("Done dropping " + keyspace + "... ");
             Thread.sleep(5000);
-            region1.createKeyspace("CREATE KEYSPACE " + keyspace
+            repository.createKeyspace("CREATE KEYSPACE " + keyspace
                     + " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'datacenter1' : 1 }");
             Thread.sleep(5000);
             System.out.println("Done creating " + keyspace + " keyspace... ");
-            region1.createTable("CREATE TABLE " + keyspace + "." + table
+            repository.createTable("CREATE TABLE " + keyspace + "." + table
                     + " (user_id text PRIMARY KEY, user_name text, user_bcity text)");
             Thread.sleep(8000);
             System.out.println("Done creating " + table + " table... ");
@@ -86,7 +85,7 @@ public class UserProfile {
             // Run Load Test - Insert rows into user table
 
            
-            u.loadTest(region1, region2, u, loadTestPreparedStatement, loadTestFinalSelectQuery,NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
+            u.loadTest(repository, u, loadTestPreparedStatement, loadTestFinalSelectQuery,NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
         } catch (Exception e) {
             System.out.println("Main Exception " + e);
         } finally {
@@ -98,7 +97,7 @@ public class UserProfile {
         return random;
     }
 
-    public void loadTest(UserRepository region1, UserRepository region2, UserProfile u, String preparedStatement, String finalQuery,
+    public void loadTest(UserRepository repository, UserProfile u, String preparedStatement, String finalQuery,
             int noOfThreads, int noOfWritesPerThread) throws InterruptedException {
 
         Faker faker = new Faker();
@@ -111,27 +110,14 @@ public class UserProfile {
                 int n = rand.nextInt(2);
                 for (int j = 1; j <= noOfWritesPerThread; j++) {
                     UUID guid = java.util.UUID.randomUUID();
+                    String strGuid = guid.toString();
+                    docIDs.add(strGuid);
                     try {
                         String name = faker.name().lastName();
                         String city = faker.address().city();
                         u.recordcount.incrementAndGet();
                         long startTime = System.currentTimeMillis();
-
-                        // load balancing across regions
-                        if (loadBalanceRegions == true) {
-                            // approx 50% of the time we will go to region 1
-                            if (n == 1) {
-                                System.out.print("writing to region 1! \n");
-                                region1.insertUser(preparedStatement, guid.toString(), name, city);
-                            }
-                            // approx 50% of the time we will go to region 2
-                            else {
-                                System.out.print("writing to region 2! \n");
-                                region2.insertUser(preparedStatement, guid.toString(), name, city);
-                            }
-                        } else {
-                            region1.insertUser(preparedStatement, guid.toString(), name, city);
-                        }
+                        repository.insertUser(preparedStatement, guid.toString(), name, city);
                         long endTime = System.currentTimeMillis();
                         long duration = (endTime - startTime);
                         System.out.print("insert duration time millis: " + duration + "\n");
@@ -148,13 +134,28 @@ public class UserProfile {
         }
         es.shutdown();
         boolean finished = es.awaitTermination(5, TimeUnit.MINUTES);
+        //boolean finished = true;
         if (finished) {
-            Thread.sleep(3000);
-            region1.selectUserCount(finalQuery);            
-            System.out.println("count of records attempted: " + u.recordcount);
+            Thread.sleep(3000);    
+            System.out.println("count of records attempted: " + u.recordcount);    
             long latency = (totalLatency.get() / insertCount.get());
-            System.out.print("Average Latency: " + latency + "\n");
-            System.out.println("Finished executing all threads.");
+
+            //lets look at latency for reads in local region by reading all the records just written
+            int readcount = NUMBER_OF_THREADS * NUMBER_OF_WRITES_PER_THREAD;
+            long noOfUsersInTable = 0;
+            noOfUsersInTable = repository.selectUserCount(finalQuery);
+            for (String id : docIDs) {
+                long startTime = System.currentTimeMillis();
+                repository.selectUser(id.toString());
+                long endTime = System.currentTimeMillis();
+                long duration = (endTime - startTime);  
+                totalReadLatency.getAndAdd(duration);
+            }            
+            System.out.println("count of users in table: " + noOfUsersInTable);
+            long readLatency = (totalReadLatency.get() / readcount); 
+            System.out.print("Average write Latency: " + latency + "\n");
+            System.out.println("Average read latency: " + readLatency);      
+            System.out.println("Finished executing all threads.");    
             System.exit(0);            
         }
 

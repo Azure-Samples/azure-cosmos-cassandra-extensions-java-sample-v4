@@ -64,11 +64,10 @@ public class UserRepository {
      *
      * @param id user_id
      */
-    public void selectUser(int id) {
-        final String query = "SELECT * FROM uprofile.user where user_id = 3";
+    public void selectUser(String id) {
+        final String query = "SELECT * FROM uprofile.user where user_id ='"+id+"'";
         Row row = session.execute(query).one();
-
-        LOGGER.info("Obtained row: {} | {} | {} ", row.getInt("user_id"), row.getString("user_name"),
+        LOGGER.info("Obtained row: {} | {} | {} ", row.getString("user_id"), row.getString("user_name"),
                 row.getString("user_bcity"));
     }
 
@@ -99,11 +98,10 @@ public class UserRepository {
         session.execute(batch);
     }
 
-    public void selectUserCount(String queryString) {
+    public long selectUserCount(String queryString) {
         final String query = queryString;
         Row row = session.execute(query).one();
-        // LOGGER.info("count of users: " +row.getLong(0), row.getLong(0));
-        System.out.println("count of users in table: " + row.getLong(0));
+        return row.getLong(0);
     }
 
     /**

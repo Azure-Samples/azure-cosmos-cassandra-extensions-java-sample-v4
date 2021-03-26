@@ -37,7 +37,7 @@ public class CassandraUtils {
      * @throws KeyManagementException
      */
 
-    public CqlSession getSession(String contactPoint, int port, String region)
+    public CqlSession getSession(String contactPoint, int port)
             throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException,
             UnrecoverableKeyException, KeyManagementException {
 
@@ -62,8 +62,8 @@ public class CassandraUtils {
         sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new java.security.SecureRandom());
 
         session = CqlSession.builder().withSslContext(sc)
-                .addContactPoint(new InetSocketAddress(contactPoint, cassandraPort)).withLocalDatacenter(region)
-                .withAuthCredentials(cassandraUsername, cassandraPassword).build();
+                .addContactPoint(new InetSocketAddress(contactPoint, cassandraPort))//.withLocalDatacenter(region)
+                .withAuthCredentials(cassandraUsername, cassandraPassword).build();       
 
         System.out.println("Creating session: " + session.getName());
         return session;

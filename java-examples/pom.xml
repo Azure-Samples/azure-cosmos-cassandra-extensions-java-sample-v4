@@ -7,7 +7,7 @@
     <version>1.0-SNAPSHOT</version>
       <properties>
         <version.assertj-core>3.11.1</version.assertj-core>  
-        <version.cassandra-driver-core>4.5.1</version.cassandra-driver-core>  
+        <version.cassandra-driver-core>4.9.0</version.cassandra-driver-core>  
         <version.cassandra-driver-query-builder>4.0.0</version.cassandra-driver-query-builder>  
         <version.org.apache.commons.io>2.4</version.org.apache.commons.io>
         <version.testng>6.14.3</version.testng>
@@ -33,11 +33,11 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.5</version>
         </dependency>
-        <!-- <dependency>
-            <groupId>com.microsoft.azure</groupId>
+        <dependency>
+            <groupId>com.github.Azure</groupId>
             <artifactId>azure-cosmos-cassandra-extensions</artifactId>
-            <version>0.11.0</version>
-        </dependency>        -->
+            <version>5cf59ffdd6f89ba6290b1a66626107e8afd101b6</version>
+        </dependency>      
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
