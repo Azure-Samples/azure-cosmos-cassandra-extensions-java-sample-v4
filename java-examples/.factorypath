@@ -48,7 +48,6 @@
     <factorypathentry kind="VARJAR" id="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="VARJAR" id="M2_REPO/com/github/Azure/azure-cosmos-cassandra-extensions/5cf59ffdd6f89ba6290b1a66626107e8afd101b6/azure-cosmos-cassandra-extensions-5cf59ffdd6f89ba6290b1a66626107e8afd101b6.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="VARJAR" id="M2_REPO/com/github/Azure/azure-cosmos-cassandra-extensions/azure-cosmos-cassandra-driver-4-extensions/5cf59ffdd6f89ba6290b1a66626107e8afd101b6/azure-cosmos-cassandra-driver-4-extensions-5cf59ffdd6f89ba6290b1a66626107e8afd101b6.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/com/google/guava/guava/r05/guava-r05.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="VARJAR" id="M2_REPO/org/apache/directory/studio/org.apache.commons.io/2.4/org.apache.commons.io-2.4.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="VARJAR" id="M2_REPO/commons-io/commons-io/2.4/commons-io-2.4.jar" enabled="true" runInBatchMode="false"/>
     <factorypathentry kind="VARJAR" id="M2_REPO/com/github/javafaker/javafaker/0.17.2/javafaker-0.17.2.jar" enabled="true" runInBatchMode="false"/>

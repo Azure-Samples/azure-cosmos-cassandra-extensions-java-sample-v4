@@ -48,9 +48,9 @@ public class UserRepository {
     /**
      * Select all rows from user table
      */
-    public void selectAllUsers() {
+    public void selectAllUsers(String keyspace) {
 
-        final String query = "SELECT * FROM uprofile.user";
+        final String query = "SELECT * FROM "+keyspace+".user";
         List<Row> rows = session.execute(query).all();
 
         for (Row row : rows) {
@@ -64,8 +64,8 @@ public class UserRepository {
      *
      * @param id user_id
      */
-    public void selectUser(String id) {
-        final String query = "SELECT * FROM uprofile.user where user_id ='"+id+"'";
+    public void selectUser(String id, String keyspace, String table) {
+        final String query = "SELECT * FROM "+keyspace+"."+table+" where user_id ='"+id+"'";
         Row row = session.execute(query).one();
         LOGGER.info("Obtained row: {} | {} | {} ", row.getString("user_id"), row.getString("user_name"),
                 row.getString("user_bcity"));

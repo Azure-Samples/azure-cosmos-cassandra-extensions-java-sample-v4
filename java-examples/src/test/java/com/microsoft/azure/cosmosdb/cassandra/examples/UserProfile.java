@@ -41,7 +41,6 @@ public class UserProfile {
     AtomicLong averageLatency = new AtomicLong(0);
     AtomicLong totalReadLatency = new AtomicLong(0);
     AtomicLong averageReadLatency = new AtomicLong(0);
-    //AtomicReferenceArray<String> docIDs = new AtomicReferenceArray<String>(NUMBER_OF_THREADS * NUMBER_OF_WRITES_PER_THREAD);
     Queue<String> docIDs = new ConcurrentLinkedQueue<String>();
 
     private static int PORT;
@@ -66,7 +65,7 @@ public class UserProfile {
         String table = "user";
         try {
             //Create keyspace and table in cassandra database
-            repository.deleteTable("DROP KEYSPACE " + keyspace + "");
+            repository.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
             System.out.println("Done dropping " + keyspace + "... ");
             Thread.sleep(5000);
             repository.createKeyspace("CREATE KEYSPACE " + keyspace
@@ -85,7 +84,7 @@ public class UserProfile {
             // Run Load Test - Insert rows into user table
 
            
-            u.loadTest(repository, u, loadTestPreparedStatement, loadTestFinalSelectQuery,NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
+            u.loadTest(keyspace, table, repository, u, loadTestPreparedStatement, loadTestFinalSelectQuery,NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
         } catch (Exception e) {
             System.out.println("Main Exception " + e);
         } finally {
@@ -97,7 +96,7 @@ public class UserProfile {
         return random;
     }
 
-    public void loadTest(UserRepository repository, UserProfile u, String preparedStatement, String finalQuery,
+    public void loadTest(String keyspace, String table, UserRepository repository, UserProfile u, String preparedStatement, String finalQuery,
             int noOfThreads, int noOfWritesPerThread) throws InterruptedException {
 
         Faker faker = new Faker();
@@ -137,7 +136,7 @@ public class UserProfile {
         //boolean finished = true;
         if (finished) {
             Thread.sleep(3000);    
-            System.out.println("count of records attempted: " + u.recordcount);    
+               
             long latency = (totalLatency.get() / insertCount.get());
 
             //lets look at latency for reads in local region by reading all the records just written
@@ -146,11 +145,13 @@ public class UserProfile {
             noOfUsersInTable = repository.selectUserCount(finalQuery);
             for (String id : docIDs) {
                 long startTime = System.currentTimeMillis();
-                repository.selectUser(id.toString());
+                repository.selectUser(id.toString(), keyspace, table);
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);  
+                System.out.print("read duration time millis: " + duration + "\n");
                 totalReadLatency.getAndAdd(duration);
-            }            
+            }
+            System.out.println("count of inserts attempted: " + u.recordcount);             
             System.out.println("count of users in table: " + noOfUsersInTable);
             long readLatency = (totalReadLatency.get() / readcount); 
             System.out.print("Average write Latency: " + latency + "\n");
