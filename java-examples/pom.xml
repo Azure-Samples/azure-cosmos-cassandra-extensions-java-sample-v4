@@ -38,11 +38,6 @@
             <artifactId>azure-cosmos-cassandra-extensions</artifactId>
             <version>5cf59ffdd6f89ba6290b1a66626107e8afd101b6</version>
         </dependency>      
-        <!-- <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>r05</version>
-        </dependency> -->
         <dependency>
             <artifactId>java-driver-core</artifactId>
             <groupId>com.datastax.oss</groupId>
