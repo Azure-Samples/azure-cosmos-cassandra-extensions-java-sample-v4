@@ -38,6 +38,11 @@
             <artifactId>azure-cosmos-cassandra-extensions</artifactId>
             <version>5cf59ffdd6f89ba6290b1a66626107e8afd101b6</version>
         </dependency>      
+        <!-- <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
+            <version>0.1.0-beta.1</version>
+        </dependency>         -->
         <dependency>
             <artifactId>java-driver-core</artifactId>
             <groupId>com.datastax.oss</groupId>

@@ -1,6 +1,4 @@
 package com.microsoft.azure.cosmosdb.cassandra.examples;
-
-import java.io.IOException;
 import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
@@ -10,7 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import com.microsoft.azure.cosmosdb.cassandra.repository.UserRepository;
 import com.microsoft.azure.cosmosdb.cassandra.util.CassandraUtils;
@@ -45,49 +42,39 @@ public class UserProfile {
 
     private static int PORT;
     private static String region1ContactPoint;
-    static {
-        try {
-            PORT = Short.parseShort(config.getProperty("cassandra_port"));
-            region1ContactPoint= config.getProperty("contactPoint");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void main(String[] s) throws Exception {
 
         CassandraUtils utils = new CassandraUtils();
         UserProfile u = new UserProfile();
         CqlSession session = utils.getSession(region1ContactPoint, PORT);
-       
+        //CqlSession session = CqlSession.builder().build(); 
         UserRepository repository = new UserRepository(session);
         String keyspace = "uprofile";
-        String table = "user";
+        String table = "user2";
         try {
             //Create keyspace and table in cassandra database
             repository.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
             System.out.println("Done dropping " + keyspace + "... ");
-            Thread.sleep(5000);
             repository.createKeyspace("CREATE KEYSPACE " + keyspace
                     + " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'datacenter1' : 1 }");
-            Thread.sleep(5000);
             System.out.println("Done creating " + keyspace + " keyspace... ");
             repository.createTable("CREATE TABLE " + keyspace + "." + table
                     + " (user_id text PRIMARY KEY, user_name text, user_bcity text)");
-            Thread.sleep(8000);
+            Thread.sleep(2000);
             System.out.println("Done creating " + table + " table... ");
             LOGGER.info("inserting records....");
 
             //Setup load test queries
             String loadTestPreparedStatement = "insert into "+keyspace + "." + table+" (user_bcity,user_id,user_name) VALUES (?,?,?)";
             String loadTestFinalSelectQuery = "SELECT COUNT(*) as coun FROM " + keyspace + "." + table + "";
+            
             // Run Load Test - Insert rows into user table
-
-           
             u.loadTest(keyspace, table, repository, u, loadTestPreparedStatement, loadTestFinalSelectQuery,NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
         } catch (Exception e) {
             System.out.println("Main Exception " + e);
         } finally {
+            //session.close();
             utils.close();
         }
     }

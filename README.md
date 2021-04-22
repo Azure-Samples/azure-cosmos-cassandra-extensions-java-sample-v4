@@ -9,7 +9,7 @@ urlFragment: azure-cosmos-cassandra-extensions-java-sample-v4
 ---
 
 # Using Retry and Load Balancing policies in Azure Cosmos DB Cassandra API (v4 Driver)
-Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API - v4 Java Driver](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/feature/java-driver-4/improved-concurrency-and-test-coverage). The extension JAR is built using [jitpack.io](https://jitpack.io) from the latest stable release branch in github, and is offered as a **public preview**.
+Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API - v4 Java Driver](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/feature/java-driver-4/improved-concurrency-and-test-coverage). The extension JAR is offered as a **public preview** in with [0.1.0-beta.1 release in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/0.1.0-beta.1/jar). 
 
 The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. 
 
@@ -29,27 +29,47 @@ The retry policy handles errors such as OverLoadedException (which may occur due
 
 1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-1. Next, substitute the Cassandra host, username, and password in  `java-examples\src\test\resources\config.properties` (you can get all these values from "connection string" tab in Azure portal) Your config file should look like the below:
+1. Next, substitute the Cassandra username, and password in the auth-provider section of the file `java-examples\src\test\resources\application.conf` (you can get all these values from "connection string" tab in Azure portal):
 
     ```conf
-    ###Cassandra endpoint details on cosmosdb
-    cassandra_port=10350
-    contactPoint=cassandrahost.cassandra.cosmos.azure.com
-    cassandra_username=cassandrahost
-    cassandra_password=********
-    #ssl_keystore_file_path=<FILLME>
-    #ssl_keystore_password=<FILLME>     
+    auth-provider {
+      # By default we use the PlainTextAuthProvider (see reference.conf) and specify the username and password here.
+      username = "<FILLME>"
+      password = "<FILLME>"
+      class = PlainTextAuthProvider
+    }   
     ```
 
-    If ssl_keystore_file_path is not given in config.properties, then by default <JAVA_HOME>/jre/lib/security/cacerts will be used. If ssl_keystore_password is not given in config.properties, then the default password 'changeit' will be used
+    By default <JAVA_HOME>/jre/lib/security/cacerts will be used for the SSL keystore, and default password 'changeit' will be used - see `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java`.
 
-1. Now take a look at the file `java-examples\src\test\resources\application.conf`. This contains various connection settings that are recommended for Cosmos DB Cassandra API, as well as implementing the retry and load balancing policies in the extension library. You will also notice a preferred write region and read region have been defined. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.
+1. Note that application.conf contains various connection settings that are recommended for Cosmos DB Cassandra API, as well as implementing the retry and load balancing policies in the extension library. You will also notice a preferred write region and read region have been defined. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.Make sure you replace `<FILLME>` in the contact-points with the CONTACT POINT value from "connection string" tab in Azure portal:
 
     ```conf
+      basic {   
+        contact-points = ["<FILLME>:10350"]    
+        load-balancing-policy {
+            class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
+          # Global endpoint for connecting to Cassandra
+          #
+          #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
+          #   Writes will go to the default write region when global-endpoint is specified.
+          #
+          #   When global-endpoint is not specified, you must specify values for read-datacenter, write-datacenter, and
+          #   datastax-java-driver.basic.contact-points.
+          #
+          #   Set the variables referenced here to match the topology and preferences for your
+          #   Cosmos DB Cassandra API instance.
+    
+          global-endpoint = ""
+    
+          # Datacenter for read operations
+    
           # Datacenter for read operations
           read-datacenter = "Australia East"
           # Datacenter for write operations
           write-datacenter = "UK South"
+        }
+      }
     ``` 
 
    ![Console output](./media/regions.png)
