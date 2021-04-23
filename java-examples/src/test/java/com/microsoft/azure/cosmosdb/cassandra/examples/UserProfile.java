@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.microsoft.azure.cosmosdb.cassandra.repository.UserRepository;
 import com.microsoft.azure.cosmosdb.cassandra.util.CassandraUtils;
-import com.microsoft.azure.cosmosdb.cassandra.util.Configurations;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.javafaker.Faker;
 import org.slf4j.Logger;
@@ -24,7 +23,6 @@ import org.slf4j.LoggerFactory;
 public class UserProfile {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserProfile.class);
     private static Random random = new Random();
-    private static Configurations config = new Configurations();
 
     public static final int NUMBER_OF_THREADS = 40;
     public static final int NUMBER_OF_WRITES_PER_THREAD = 5;
@@ -40,18 +38,14 @@ public class UserProfile {
     AtomicLong averageReadLatency = new AtomicLong(0);
     Queue<String> docIDs = new ConcurrentLinkedQueue<String>();
 
-    private static int PORT;
-    private static String region1ContactPoint;
-
     public static void main(String[] s) throws Exception {
 
         CassandraUtils utils = new CassandraUtils();
         UserProfile u = new UserProfile();
-        CqlSession session = utils.getSession(region1ContactPoint, PORT);
-        //CqlSession session = CqlSession.builder().build(); 
+        CqlSession session = utils.getSession(); 
         UserRepository repository = new UserRepository(session);
         String keyspace = "uprofile";
-        String table = "user2";
+        String table = "user";
         try {
             //Create keyspace and table in cassandra database
             repository.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
@@ -92,8 +86,6 @@ public class UserProfile {
         for (int i = 1; i <= noOfThreads; i++) {
             Runnable task = () -> {
                 ;
-                Random rand = new Random();
-                int n = rand.nextInt(2);
                 for (int j = 1; j <= noOfWritesPerThread; j++) {
                     UUID guid = java.util.UUID.randomUUID();
                     String strGuid = guid.toString();
@@ -120,10 +112,8 @@ public class UserProfile {
         }
         es.shutdown();
         boolean finished = es.awaitTermination(5, TimeUnit.MINUTES);
-        //boolean finished = true;
         if (finished) {
-            Thread.sleep(3000);    
-               
+            Thread.sleep(3000);                 
             long latency = (totalLatency.get() / insertCount.get());
 
             //lets look at latency for reads in local region by reading all the records just written

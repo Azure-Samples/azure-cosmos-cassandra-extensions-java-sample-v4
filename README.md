@@ -9,9 +9,16 @@ urlFragment: azure-cosmos-cassandra-extensions-java-sample-v4
 ---
 
 # Using Retry and Load Balancing policies in Azure Cosmos DB Cassandra API (v4 Driver)
-Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API - v4 Java Driver](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/feature/java-driver-4/improved-concurrency-and-test-coverage). The extension JAR is offered as a **public preview** in with [0.1.0-beta.1 release in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/0.1.0-beta.1/jar). 
+Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API - v4 Java Driver](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/feature/java-driver-4/improved-concurrency-and-test-coverage). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/0.1.0-beta.1/jar). 
 
-The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. 
+```xml
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
+            <version>0.1.0-beta.1</version>
+        </dependency>
+```
+
 
 ## Prerequisites
 * Before you can run this sample, you must have the following prerequisites:
@@ -103,13 +110,32 @@ The retry policy handles errors such as OverLoadedException (which may occur due
 Bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/3.0/manual/idempotence/), with respect to the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/3.0/manual/retries/#retries-and-idempotence). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
 
 ## About the code
-The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). We also provide a client side load balancing test. 
+The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/test/resources/application.conf`:
 
+```conf
+    retry-policy {
+      # When you take a dependency on azure-cosmos-cassandra-driver-4-extensions CosmosRetryPolicy is used by default.
+      # This provides a good out-of-box experience for communicating with Cosmos Cassandra instances.
+      class = com.azure.cosmos.cassandra.CosmosRetryPolicy
+      max-retries = 5              # Maximum number of retries
+      fixed-backoff-time = 5000    # Fixed backoff time in milliseconds
+      growing-backoff-time = 1000  # Growing backoff time in milliseconds
+    }
+```
+
+
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. THis is intended to illustrate the difference between using a preferred read region in the load balancing policy, vs the default region. The class for load balancing policy is added in application.conf:
+
+```conf
+    load-balancing-policy {
+        class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
+
+```
 
 
 ## Review the code
 
-You can review the following files: `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java` and `src/test/java/com/microsoft/azure/cosmosdb/cassandra/repository/UserRepository.java` to understand how the sessions are created. You should also review the main class file  `src/test/java/com/microsoft/azure/cosmosdb/cassandra/examples/UserProfile.java` where the load test is created and run. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/test/resources/application.conf`
+You can review the following files: `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java` and `src/test/java/com/microsoft/azure/cosmosdb/cassandra/repository/UserRepository.java` to understand how the sessions are created. You should also review the main class file  `src/test/java/com/microsoft/azure/cosmosdb/cassandra/examples/UserProfile.java` where the load test is created and run. 
 
 ## More information
 

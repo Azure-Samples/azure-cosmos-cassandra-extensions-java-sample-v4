@@ -32,7 +32,7 @@ public class CassandraUtils {
      * @throws KeyManagementException
      */
 
-    public CqlSession getSession(String contactPoint, int port) throws KeyStoreException, NoSuchAlgorithmException,
+    public CqlSession getSession() throws KeyStoreException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException, KeyManagementException {
 
         // Load security aspects
