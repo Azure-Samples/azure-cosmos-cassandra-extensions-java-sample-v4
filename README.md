@@ -5,17 +5,24 @@ languages:
 products:
 - azure
 description: "Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API"
-urlFragment: azure-cosmos-db-cassandra-java-retry-sample
+urlFragment: azure-cosmos-cassandra-extensions-java-sample-v4
 ---
 
-# Handling rate limited requests in the Azure Cosmos DB API for Cassandra (v4 Driver)
-Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests. These are also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb), and are returned when the consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) that have been provisioned for the service. In this code sample, we implement a custom retry policy for Cosmos DB.
+# Using Retry and Load Balancing policies in Azure Cosmos DB Cassandra API (v4 Driver)
+Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/feature/java-driver-4/improved-concurrency-and-test-coverage) for the [Java v4 Datastax Apache Cassandra OSS Driver](https://github.com/datastax/java-driver/tree/4.x). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/0.1.0-beta.1/jar). 
 
-The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. 
+```xml
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
+            <version>0.1.0-beta.1</version>
+        </dependency>
+```
+
 
 ## Prerequisites
 * Before you can run this sample, you must have the following prerequisites:
-    * An active Azure Cassandra API account - If you don't have an account, refer to the [Create Cassandra API account](https://aka.ms/cassapijavaqs).
+    * An active Azure Cassandra API account - If you don't have an account, refer to the [Create Cassandra API account](https://aka.ms/cassapijavaqs). For illustration purposes, the sample assumes an account with two regions that are very far apart: in this case Australia East and UK South (where UK South is very close to where the client application has been deployed). 
     * [Java Development Kit (JDK) 1.8+](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
         * On Ubuntu, run `apt-get install default-jdk` to install the JDK.
     * Be sure to set the JAVA_HOME environment variable to point to the folder where the JDK is installed.
@@ -25,89 +32,112 @@ The retry policy handles errors such as OverLoadedException (which may occur due
         * On Ubuntu, you can run `sudo apt-get install git` to install Git.
 
 ## Running this sample
-1. Clone this repository using `git clone git@github.com:Azure-Samples/azure-cosmos-db-cassandra-java-retry-sample-v4.git cosmosdb`.
+1. Clone this repository using `git clone git@github.com:Azure-Samples/azure-cosmos-cassandra-extensions-java-sample-v4.git cosmosdb`.
 
-2. Change directories to the repo using `cd cosmosdb/java-examples`
+1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-3. Next, substitute the Cassandra host, username, and password in  `java-examples\src\test\resources\config.properties` for two regions, with your Cosmos DB account's values from connectionstring panel of the portal. Note that this sample assumes you have [multi-master](https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-multi-master) configured, with two regions. When adding the regional contact point, you should specify the regional suffix, as below (e.g. "cassandrahost-westus"). However, if you do not have multi-master setup, you can simply use the same contact point and region value for both region 1 and region 2 (note however that if you only have 1 region, the load balancing portion of the test will not reduce the latency when rate limiting). Your config file should look like the below:
+1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples\src\test\resources\application.conf` (you can get all these values from "connection string" tab in Azure portal):
 
+    ```conf
+    auth-provider {
+      # By default we use the PlainTextAuthProvider (see reference.conf) and specify the username and password here.
+      username = "<FILLME>"
+      password = "<FILLME>"
+      class = PlainTextAuthProvider
+    }   
     ```
-    cassandra_port=10350
-    cassandra_region1ContactPoint=cassandrahost-francecentral.cassandra.cosmos.azure.com
-    cassandra_region2ContactPoint=cassandrahost-westus.cassandra.cosmos.azure.com
-    cassandra_region1=France Central
-    cassandra_region2=West US
-    cassandra_username=cassandrahost
-    cassandra_password=******
-    #ssl_keystore_file_path=<FILLME>
-    #ssl_keystore_password=<FILLME>    
-    ```
-    If ssl_keystore_file_path is not given in config.properties, then by default <JAVA_HOME>/jre/lib/security/cacerts will be used. If ssl_keystore_password is not given in config.properties, then the default password 'changeit' will be used
 
-4. Run `mvn clean install` from java-examples folder to build the project. This will generate cosmosdb-cassandra-examples.jar under target folder.
+    By default <JAVA_HOME>/jre/lib/security/cacerts will be used for the SSL keystore, and default password 'changeit' will be used - see `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java`.
+
+1. Now find the `basic` configuration section within `application.conf`. Replace `<FILLME>` in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
+
+    ```conf
+      basic {   
+        contact-points = ["<FILLME>:10350"]    
+        load-balancing-policy {
+            class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
+          # Global endpoint for connecting to Cassandra
+          #
+          #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
+          #   Writes will go to the default write region when global-endpoint is specified.
+          #
+          #   When global-endpoint is not specified, you must specify values for read-datacenter, write-datacenter, and
+          #   datastax-java-driver.basic.contact-points.
+          #
+          #   Set the variables referenced here to match the topology and preferences for your
+          #   Cosmos DB Cassandra API instance.
+    
+          global-endpoint = ""
+    
+          # Datacenter for read operations
+    
+          # Datacenter for read operations
+          read-datacenter = "Australia East"
+          # Datacenter for write operations
+          write-datacenter = "UK South"
+        }
+      }
+    ``` 
+
+Note that `application.conf` contains various connection settings that are recommended for Cosmos DB Cassandra API, as well as implementing the retry and load balancing policies in the extension library. You will also notice a preferred write region and read region have been defined. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.
+
+   ![Console output](./media/regions.png)
+
+1. Run `mvn clean install` from java-examples folder to build the project. This will generate cosmosdb-cassandra-examples.jar under target folder.
  
-5. Run `java -cp target/cosmosdb-cassandra-examples.jar com.microsoft.azure.cosmosdb.cassandra.examples.UserProfile` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The output will include the insert duration times, average latency, the number of users present in the table after the load test, and the number of user inserts that were attempted. Users in table and records attempted should be identical since rate limits have been successfully handled and retried. Notice that although requests are all successful, you may see significant "average latency" due to requests being retried after rate limiting:
+1. Run `java -cp target/cosmosdb-cassandra-examples.jar com.microsoft.azure.cosmosdb.cassandra.examples.UserProfile` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
 
    ![Console output](./media/output.png)
 
-    If you do not see overloaded errors, you can increase the number of threads in UserProfile.java in order to force rate limiting: 
+    If you do not see higher latencies for writes, you can increase the number of threads in UserProfile.java in order to force more rate limiting: 
 
     ```java
         public static final int NUMBER_OF_THREADS = 40;
     ```
 
-6. In a real world scenario, you may wish to take steps to increase the provisioned throughput when the system is experiencing rate limiting. Note that you can do this programmatically in the Azure Cosmos DB API for Cassandra by executing [ALTER commends in CQL](https://docs.microsoft.com/azure/cosmos-db/cassandra-support#keyspace-and-table-options). In production, you should handle 429 errors in a similar fashion to this sample, and monitor the system, increasing throughput if 429 errors are being recorded by the system. You can monitor whether requests are exceeding provisioned capacity using Azure portal metrics:
+1. To improve the read latency for our UK South client application instance, we can change the `read-datacenter` parameter (implemented by the load balancing policy in the extension) within `application.conf` to make sure that reads are served from the region local to the application. Of course, for the application instance that is running in Australia East, the settings would stay as Australia East, to ensure that each client is communicating with the closest region:
 
-   ![Console output](./media/metrics.png)
-
-    You can try increasing the provisioned RUs in the Cassandra Keyspace or table to see how this will improve latencies. You can consult our article on [elastic scale](https://docs.microsoft.com/en-us/azure/cosmos-db/manage-scale-cassandra) to understand the different methods for provisioning throughput in Cassandra API. 
-
-7. One alternative to increasing RU provisioning for mitigating rate limiting, which might be more useful in scenarios where there is a highly asymmetrical distribution of consumed throughput between regions (i.e. you have many more reads/writes in one region than others), is to load balance between regions on the client. In version 4 of the Datastax OSS driver for Cassandra, there was a [change in philosophy](https://docs.datastax.com/en/developer/java-driver/4.5/manual/core/load_balancing/) concerning whether load balancing should be handled at the application level. Datastax now believe that this is not the right place to handle this: if a whole datacenter went down at once, it probably means a catastrophic failure happened in Region1, and the application node is down as well. Failover should therefore be cross-region instead (e.g. handled by a load balancer). As such, the default load balancing policy does not allow remote nodes, and you must provide a local datacenter name at the application level (this must also match the contact point you have provided). We simulate this in the sample, by creating two sessions, each pointing to different regions in Cosmos DB:
-
-    To test this out, set the `loadBalanceRegions` variable to true:
-
-    ```java
-    Boolean loadBalanceRegions = true;
+    ```conf
+          # Datacenter for read operations
+          read-datacenter = "UK South"
+          # Datacenter for write operations
+          write-datacenter = "UK South"
     ```
-    Note: to observe any difference when running this, you would need to have two regions configured for replication, and [multi-master writes configured](https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-multi-master). When you run the test again with load loadBalanceRegions set to true, you should see requests being written to different regions, with latencies reduced, without having to increase provisioned throughput (RUs):
 
-    ![Console output](./media/loadbalancingoutput.png)
+1. Run the application again and you should observe lower read latencies.
 
-    Note: you may notice that if you are not experiencing rate limiting even when load balancing is set to false in this sample, then the average latency if load balancing is set to true might be higher. There is because there is a cost trade off between the latency incurred when routing to a further away region (in order to lower cost of RU provisioning by leveraging under-used regions) and keeping latency down to an absolute minimum by always routing to the nearest region, and ensuring that RUs are provisioned at a level which always accounts for the region that has the highest activity. This is trade-off that you will need to decide upon within your business.  
-    
-    Also bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/3.0/manual/idempotence/), and the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/3.0/manual/retries/#retries-and-idempotence). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
+   ![Console output](./media/local-read-output.png)
+
+ 
+Bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/3.0/manual/idempotence/), with respect to the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/3.0/manual/retries/#retries-and-idempotence). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
 
 ## About the code
-The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). We also provide a client side load balancing test. 
+The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/test/resources/application.conf`:
 
+```conf
+    retry-policy {
+      # When you take a dependency on azure-cosmos-cassandra-driver-4-extensions CosmosRetryPolicy is used by default.
+      # This provides a good out-of-box experience for communicating with Cosmos Cassandra instances.
+      class = com.azure.cosmos.cassandra.CosmosRetryPolicy
+      max-retries = 5              # Maximum number of retries
+      fixed-backoff-time = 5000    # Fixed backoff time in milliseconds
+      growing-backoff-time = 1000  # Growing backoff time in milliseconds
+    }
+```
+
+
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is defined in `application.conf`:
+
+```conf
+    load-balancing-policy {
+        class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
+
+```
 
 
 ## Review the code
 
-You can review the following files: `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java` and `src/test/java/com/microsoft/azure/cosmosdb/cassandra/repository/UserRepository.java` to understand how the sessions are created. You should also review the main class file  `src/test/java/com/microsoft/azure/cosmosdb/cassandra/examples/UserProfile.java` where the load test is created and run. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/test/resources/reference.conf`
-
-```
-  profiles {
-    # Cosmos DB Custom Policies
-    cosmos-policies {
-      cosmos.retry-policy {
-        class = com.microsoft.azure.cosmos.cassandra.CosmosRetryPolicy
-        maxRetryCount = "20"
-        growingBackOffTimeMillis = "100"
-        fixedBackOffTimeMillis = "1000"
-      }         
-    }
-  }
-```
-
-Please note that timeout limits are also set in reference.conf:
-
-```
-    timeout = 60 seconds
-
-```
-
-You should also review the custom retry policy: `src/test/java/com/microsoft/azure/cosmos/cassandra/CosmosRetryPolicy.java`
+You can review the following files: `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java` and `src/test/java/com/microsoft/azure/cosmosdb/cassandra/repository/UserRepository.java` to understand how the sessions are created. You should also review the main class file  `src/test/java/com/microsoft/azure/cosmosdb/cassandra/examples/UserProfile.java` where the load test is created and run. 
 
 ## More information
 
