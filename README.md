@@ -126,7 +126,7 @@ The code included in this sample is a load test to simulate a scenario where Cos
 ```
 
 
-In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. THis is intended to illustrate the difference between using a preferred read region in the load balancing policy, vs the default region. The class for load balancing policy is added in application.conf:
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred read region in the load balancing policy, vs the default region. The class for load balancing policy is added in `application.conf`:
 
 ```conf
     load-balancing-policy {
