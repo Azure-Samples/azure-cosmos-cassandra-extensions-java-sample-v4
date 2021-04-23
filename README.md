@@ -49,7 +49,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
 
     By default <JAVA_HOME>/jre/lib/security/cacerts will be used for the SSL keystore, and default password 'changeit' will be used - see `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java`.
 
-1. Note that application.conf contains various connection settings that are recommended for Cosmos DB Cassandra API, as well as implementing the retry and load balancing policies in the extension library. You will also notice a preferred write region and read region have been defined. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.Make sure you replace `<FILLME>` in the contact-points with the CONTACT POINT value from "connection string" tab in Azure portal:
+1. Now find the `basic` configuration section within `application.conf`. Replace `<FILLME>` in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
 
     ```conf
       basic {   
@@ -78,6 +78,8 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
         }
       }
     ``` 
+
+Note that `application.conf` contains various connection settings that are recommended for Cosmos DB Cassandra API, as well as implementing the retry and load balancing policies in the extension library. You will also notice a preferred write region and read region have been defined. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.
 
    ![Console output](./media/regions.png)
 
