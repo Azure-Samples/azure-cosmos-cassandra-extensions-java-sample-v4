@@ -36,7 +36,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
 
 1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-1. Next, substitute the Cassandra username, and password in the auth-provider section of the file `java-examples\src\test\resources\application.conf` (you can get all these values from "connection string" tab in Azure portal):
+1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples\src\test\resources\application.conf` (you can get all these values from "connection string" tab in Azure portal):
 
     ```conf
     auth-provider {
