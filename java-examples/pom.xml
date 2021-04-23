@@ -72,7 +72,7 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
           <finalName>cosmosdb-cassandra-examples</finalName>
-          <appendAssemblyId>false</appendAssemblyId>
+          <appendAssemblyId>true</appendAssemblyId>
         </configuration>
         <executions>
           <execution>
