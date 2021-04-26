@@ -1,13 +1,13 @@
-package com.microsoft.azure.cosmosdb.cassandra;
+package com.azure.cosmos.cassandra.repository;
 
 /**
  * User table entity class
  */
 public class User {
 
+    private String user_bcity;
     private int user_id;
     private String user_name;
-    private String user_bcity;
 
     public User() {
 
@@ -16,6 +16,14 @@ public class User {
     public User(int user_id, String user_name, String user_bcity) {
         this.user_id = user_id;
         this.user_name = user_name;
+        this.user_bcity = user_bcity;
+    }
+
+    public String getUser_bcity() {
+        return user_bcity;
+    }
+
+    public void setUser_bcity(String user_bcity) {
         this.user_bcity = user_bcity;
     }
 
@@ -35,20 +43,12 @@ public class User {
         this.user_name = user_name;
     }
 
-    public String getUser_bcity() {
-        return user_bcity;
-    }
-
-    public void setUser_bcity(String user_bcity) {
-        this.user_bcity = user_bcity;
-    }
-
     @Override
     public String toString() {
         return "User{" +
-                "user_id=" + user_id +
-                ", user_name='" + user_name + '\'' +
-                ", user_bcity='" + user_bcity + '\'' +
-                '}';
+            "user_id=" + user_id +
+            ", user_name='" + user_name + '\'' +
+            ", user_bcity='" + user_bcity + '\'' +
+            '}';
     }
 }
