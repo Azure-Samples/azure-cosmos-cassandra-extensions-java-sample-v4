@@ -36,7 +36,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
 
 1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples/src/test/resources/application.conf` (you can get all these values from "connection string" tab in Azure portal):
+1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples/src/main/resources/application.conf` (you can get all these values from "connection string" tab in Azure portal):
 
     ```conf
     auth-provider {
@@ -45,8 +45,6 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
       password = ${AZURE_COSMOS_CASSANDRA_PASSWORD}
     }
     ```
-
-    By default <JAVA_HOME>/jre/lib/security/cacerts will be used for the SSL keystore, and default password 'changeit' will be used - see `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java`.
 
 1. Now find the `basic` configuration section within `application.conf`. Replace the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
 
@@ -75,9 +73,9 @@ Note that `application.conf` contains various connection settings that are recom
 
    ![Console output](./media/regions.png)
 
-1. Run `mvn clean install` from java-examples folder to build the project. This will generate cosmosdb-cassandra-examples.jar under target folder.
+1. Run `mvn clean package` from java-examples folder to build the project. This will generate azure-cosmos-cassandra-examples-1.0.0-SNAPSHOT.jar under target folder.
  
-1. Run `java -cp target/cosmosdb-cassandra-examples.jar com.microsoft.azure.cosmosdb.cassandra.examples.UserProfile` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
+1. Run `java -jar target/azure-cosmos-cassandra-examples-1.0.0-SNAPSHOT.jar` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
 
    ![Console output](./media/output.png)
 
@@ -104,7 +102,7 @@ Note that `application.conf` contains various connection settings that are recom
 Bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/3.0/manual/idempotence/), with respect to the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/3.0/manual/retries/#retries-and-idempotence). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
 
 ## About the code
-The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/test/resources/application.conf`:
+The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within `src/main/resources/application.conf`:
 
 ```conf
     retry-policy {
@@ -118,7 +116,7 @@ The code included in this sample is a load test to simulate a scenario where Cos
 ```
 
 
-In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The loadTest() will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is defined in `application.conf`:
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The `loadTest()` will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is defined in `application.conf`:
 
 ```conf
     load-balancing-policy {
@@ -129,7 +127,7 @@ In this sample, we create a Keyspace and table, and run a multi-threaded process
 
 ## Review the code
 
-You can review the following files: `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java` and `src/test/java/com/microsoft/azure/cosmosdb/cassandra/repository/UserRepository.java` to understand how the sessions are created. You should also review the main class file  `src/test/java/com/microsoft/azure/cosmosdb/cassandra/examples/UserProfile.java` where the load test is created and run. 
+You can review the following files:  the main class file  `src/main/java/com/azure/cosmos/cassandra/examples/UserProfile.java`, `src/main/resources/application.conf`, and `src/main/java/com/azure/cosmos/cassandra/repository/UserRepository.java` to understand how sessions are created. You should also review the main class file  `src/main/java/com/azure/cosmos/cassandra/examples/UserProfile.java` to see how the load test is created and run.
 
 ## More information
 

@@ -1,4 +1,4 @@
-package com.microsoft.azure.cosmosdb.cassandra.repository;
+package com.azure.cosmos.cassandra.repository;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;

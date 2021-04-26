@@ -1,14 +1,13 @@
-package com.microsoft.azure.cosmosdb.cassandra.examples;
+package com.azure.cosmos.cassandra.examples;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.javafaker.Faker;
-import com.microsoft.azure.cosmosdb.cassandra.repository.UserRepository;
-import com.microsoft.azure.cosmosdb.cassandra.util.CassandraUtils;
+import com.azure.cosmos.cassandra.repository.UserRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -97,12 +96,11 @@ public class UserProfile {
 
     public static void main(final String[] s) throws Exception {
 
-        final CassandraUtils utils = new CassandraUtils();
         final UserProfile u = new UserProfile();
         final String keyspace = "uprofile";
         final String table = "user";
 
-        try (final CqlSession session = utils.getSession()) {
+        try (final CqlSession session = CqlSession.builder().build()) {
             final UserRepository repository = new UserRepository(session);
             //Create keyspace and table in cassandra database
             repository.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
