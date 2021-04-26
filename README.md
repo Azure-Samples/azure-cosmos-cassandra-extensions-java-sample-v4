@@ -46,7 +46,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
     }
     ```
 
-1. Now find the `basic` configuration section within `application.conf`. Replace the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
+1. Now find the `basic` configuration section within `application.conf`. Replace the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter with the `CONTACT POINT` and `PORT` values from "connection string" tab in Azure portal. The value of the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable should be of the form `uniquehostname.cassandra.cosmos.azure.com:10350`.
 
     ```conf
       basic {   
