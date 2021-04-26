@@ -36,26 +36,24 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
 
 1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples\src\test\resources\application.conf` (you can get all these values from "connection string" tab in Azure portal):
+1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples/src/test/resources/application.conf` (you can get all these values from "connection string" tab in Azure portal):
 
     ```conf
     auth-provider {
       # By default we use the PlainTextAuthProvider (see reference.conf) and specify the username and password here.
-      username = "<FILLME>"
-      password = "<FILLME>"
-      class = PlainTextAuthProvider
-    }   
+      username = ${AZURE_COSMOS_CASSANDRA_USERNAME}
+      password = ${AZURE_COSMOS_CASSANDRA_PASSWORD}
+    }
     ```
 
     By default <JAVA_HOME>/jre/lib/security/cacerts will be used for the SSL keystore, and default password 'changeit' will be used - see `src/test/java/com/microsoft/azure/cosmosdb/cassandra/util/CassandraUtils.java`.
 
-1. Now find the `basic` configuration section within `application.conf`. Replace `<FILLME>` in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
+1. Now find the `basic` configuration section within `application.conf`. Replace the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter with the `CONTACT POINT` value from "connection string" tab in Azure portal:
 
     ```conf
       basic {   
-        contact-points = ["<FILLME>:10350"]    
+        contact-points = [${AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT}]    
         load-balancing-policy {
-            class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
           # Global endpoint for connecting to Cassandra
           #
           #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
@@ -66,14 +64,8 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
           #
           #   Set the variables referenced here to match the topology and preferences for your
           #   Cosmos DB Cassandra API instance.
-    
           global-endpoint = ""
-    
-          # Datacenter for read operations
-    
-          # Datacenter for read operations
           read-datacenter = "Australia East"
-          # Datacenter for write operations
           write-datacenter = "UK South"
         }
       }
