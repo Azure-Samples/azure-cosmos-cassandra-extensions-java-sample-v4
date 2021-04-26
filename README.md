@@ -36,7 +36,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
 
 1. Change directories to the repo using `cd cosmosdb/java-examples`
 
-1. Next, substitute the Cassandra `username`, and `password` in the auth-provider section of the file `java-examples/src/main/resources/application.conf` (you can get all these values from "connection string" tab in Azure portal):
+1. Next, create AZURE_COSMOS_CASSANDRA_USERNAME and AZURE_COSMOS_CASSANDRA_PASSWORD environment variables with corresponding values for Cassandra API `username`, and `password` in the auth-provider section of the file `java-examples/src/main/resources/application.conf` (you can get the values from "connection string" tab in Azure portal):
 
     ```conf
     auth-provider {
@@ -46,7 +46,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
     }
     ```
 
-1. Now find the `basic` configuration section within `application.conf`. Replace the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter with the `CONTACT POINT` and `PORT` values from "connection string" tab in Azure portal. The value of the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable should be of the form `uniquehostname.cassandra.cosmos.azure.com:10350`.
+1. Now find the `basic` configuration section within `application.conf`. Create the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable referenced in the `contact-points` parameter and give it the value of `CONTACT POINT` and `PORT` from "connection string" tab in Azure portal. The value of the `AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT` environment variable should be of the form `uniquehostname.cassandra.cosmos.azure.com:10350`.
 
     ```conf
       basic {   
