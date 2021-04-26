@@ -116,12 +116,30 @@ The code included in this sample is a load test to simulate a scenario where Cos
 ```
 
 
-In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The `loadTest()` will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is defined in `application.conf`:
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The `loadTest()` will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is referenced in [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/release/java-driver-4/0.1.0-beta.1/package/src/main/resources/reference.conf) of the [Azure Cosmos DB extension for Cassandra API], and the values for `global-endpoint`, `read-datacenter`, and `write-datacenter` are overriden in `src/main/resources/application.conf` within this sample:
 
 ```conf
     load-balancing-policy {
-        class = com.azure.cosmos.cassandra.CosmosLoadBalancingPolicy
 
+      # Cosmos load balancing policy parameters
+      #
+      #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
+      #   Writes will go to the default write region when global-endpoint is specified. When global-endpoint is not
+      #   specified, you must specify values for read-datacenter and write-datacenter.
+      #
+      #   Update this file or run this example with these system properties set to override the values provided here:
+      #
+      #   -Ddatastax-java-driver.basic.load-balancing-policy.global-endpoint=[<global-endpoint>|""]
+      #   -DDdatastax-java-driver.basic.load-balancing-policy.read-datacenter=[<read-datacenter>|""]
+      #   -DDdatastax-java-driver.basic.load-balancing-policy.write-datacenter=[<write-datacenter>|""]
+      #
+      #   Alternatively, set the environment variables referenced here to match the topology and preferences for your
+      #   Cosmos DB Cassandra API instance.
+
+      global-endpoint = ""
+      read-datacenter = "Australia East"
+      write-datacenter = "UK South"
+    }
 ```
 
 
