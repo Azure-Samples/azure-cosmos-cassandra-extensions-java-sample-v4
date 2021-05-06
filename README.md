@@ -9,13 +9,13 @@ urlFragment: azure-cosmos-cassandra-extensions-java-sample-v4
 ---
 
 # Using Retry and Load Balancing policies in Azure Cosmos DB Cassandra API (v4 Driver)
-Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/0.1.0-beta.1) for the [Java v4 Datastax Apache Cassandra OSS Driver](https://github.com/datastax/java-driver/tree/4.x). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/0.1.0-beta.1/jar). 
+Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.0.0) for the [Java v4 Datastax Apache Cassandra OSS Driver](https://github.com/datastax/java-driver/tree/4.x). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/1.0.0/jar). 
 
 ```xml
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
-            <version>0.1.0-beta.1</version>
+            <version>1.0.0</version>
         </dependency>
 ```
 
@@ -136,12 +136,23 @@ In this sample, we create a Keyspace and table, and run a multi-threaded process
       #   Alternatively, set the environment variables referenced here to match the topology and preferences for your
       #   Cosmos DB Cassandra API instance.
 
+      multi-region-writes = false
       global-endpoint = ""
       read-datacenter = "Australia East"
       write-datacenter = "UK South"
+      preferred-regions = ["Australia East", "UK West"]
     }
 ```
 
+## Failover scenarios
+
+As illustrated above, the load balancing policy implemented in this sample (see [Cosmos Cassandra Extensions](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.0.0)) includes a feature that allows you to specify a `read-datacenter` and `write-datacenter` for application level load balancing. Specifying these options will route read and write requests to their corresponding data centers in either case. 
+
+If `read-datacenter` is specified, the policy prioritizes that region for read requests. Either one of `write-datacenter` or `global-endpoint` needs to be specified in order to determine the data center for write requests. If `write-datacenter` is specified, writes will be prioritized for that region. When `global-endpoint` is specified, the write requests will be prioritized for the default write region.
+
+### Preferred regions
+
+In the Cosmos Cassandra Extension for Java 4, the load balancing policy has been enhanced to include a `preferred-regions` parameter. This allows you to configure deterministic failover to specified regions in a multi-region deployment, in case of regional outages. The policy uses the regions in the list you specify, in priority order as determined by `preferred-regions`, to perform operations. If `preferred-regions` is null or not present, the policy uses the region specified in `read-datacenter` for reads, and either `write-datacenter` or `global-endpoint` to determine the region for writes. If neither `preferred-regions` or `read-datacenter` are present, the write region is the preferred location for all operations. When multi-region writes are enabled on the Cosmos DB account (and `multi-region-write` is set to `true`), the priority order for writes will be exactly the same as for reads.
 
 ## Review the code
 
