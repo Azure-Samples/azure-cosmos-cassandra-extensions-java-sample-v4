@@ -68,7 +68,7 @@ public class UserProfile {
         es.shutdown();
         final boolean finished = es.awaitTermination(5, TimeUnit.MINUTES);
         if (finished) {
-            Thread.sleep(3000);
+            Thread.sleep(5000);
             final long latency = (this.totalLatency.get() / this.insertCount.get());
 
             //lets look at latency for reads in local region by reading all the records just written
@@ -76,6 +76,7 @@ public class UserProfile {
             long noOfUsersInTable = 0;
             noOfUsersInTable = repository.selectUserCount(finalQuery);
             for (final String id : this.docIDs) {
+                Thread.sleep(1000);
                 final long startTime = System.currentTimeMillis();
                 repository.selectUser(id, keyspace, table);
                 final long endTime = System.currentTimeMillis();
@@ -110,7 +111,7 @@ public class UserProfile {
             System.out.println("Done creating " + keyspace + " keyspace... ");
             repository.createTable("CREATE TABLE " + keyspace + "." + table
                 + " (user_id text PRIMARY KEY, user_name text, user_bcity text)");
-            Thread.sleep(2000);
+            Thread.sleep(5000);
             System.out.println("Done creating " + table + " table... ");
             LOGGER.info("inserting records....");
 
