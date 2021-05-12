@@ -76,7 +76,6 @@ public class UserProfile {
             long noOfUsersInTable = 0;
             noOfUsersInTable = repository.selectUserCount(finalQuery);
             for (final String id : this.docIDs) {
-                Thread.sleep(1000);
                 final long startTime = System.currentTimeMillis();
                 repository.selectUser(id, keyspace, table);
                 final long endTime = System.currentTimeMillis();
