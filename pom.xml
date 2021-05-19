@@ -5,10 +5,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.azure</groupId>
-  <artifactId>azure-cosmos-cassandra-examples</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <artifactId>azure-cosmos-cassandra-java-driver-app-example</artifactId>
+  <version>1.0.0</version>
   <properties>
-    <version.cassandra-driver>4.10.0</version.cassandra-driver>
+    <version.cassandra-driver>[4.7,4.12)</version.cassandra-driver>
+    <version.log4j>[2.14,2.15)</version.log4j>
+    <version.slf4j>[1.7,1.8.0-alpha0)</version.slf4j>
     <version.javafaker>0.17.2</version.javafaker>
     <version.org.apache.commons.io>2.4</version.org.apache.commons.io>
   </properties>
@@ -16,7 +18,7 @@
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
-      <version>1.0.0</version>
+      <version>[${project.version}]</version>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
@@ -29,24 +31,24 @@
       <version>${version.cassandra-driver}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.5</version>
+      <groupId>com.github.javafaker</groupId>
+      <artifactId>javafaker</artifactId>
+      <version>${version.javafaker}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>${version.log4j}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.5</version>
+      <artifactId>slf4j-api</artifactId>
+      <version>${version.slf4j}</version>
     </dependency>
     <dependency>
       <artifactId>org.apache.commons.io</artifactId>
       <groupId>org.apache.directory.studio</groupId>
       <version>${version.org.apache.commons.io}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.javafaker</groupId>
-      <artifactId>javafaker</artifactId>
-      <version>${version.javafaker}</version>
     </dependency>
   </dependencies>
   <build>
