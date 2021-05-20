@@ -8,13 +8,18 @@
   <artifactId>azure-cosmos-cassandra-java-driver-app-example</artifactId>
   <version>1.0.0</version>
   <properties>
+    <!-- Main dependency versions -->
     <version.cassandra-driver>[4.7,4.12)</version.cassandra-driver>
     <version.log4j>[2.14,2.15)</version.log4j>
     <version.slf4j>[1.7,1.8.0-alpha0)</version.slf4j>
     <version.javafaker>0.17.2</version.javafaker>
     <version.org.apache.commons.io>2.4</version.org.apache.commons.io>
+    <!-- Test dependency versions -->
+    <version.assertj>[3.18,3.19)</version.assertj>
+    <version.junit-jupiter>[5.7,5.8)</version.junit-jupiter>
   </properties>
   <dependencies>
+    <!-- Main dependencies -->
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
@@ -50,12 +55,100 @@
       <groupId>org.apache.directory.studio</groupId>
       <version>${version.org.apache.commons.io}</version>
     </dependency>
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${version.assertj}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${version.junit-jupiter}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${version.junit-jupiter}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.0.0-M5</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.9.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.0.0-M5</version>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>4.2.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>2.4.5</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -63,7 +156,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.1.2</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -78,6 +170,35 @@
         </executions>
       </plugin>
       <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <useModulePath>false</useModulePath>
+          <includes>
+            <include>ApplicationCommandLineRunnerTest</include>
+          </includes>
+          <systemPropertyVariables>
+            <azure.cosmos.cassandra.jar>${project.build.directory}/${project.build.finalName}.jar</azure.cosmos.cassandra.jar>
+            <!-- Connection info -->
+            <azure.cosmos.cassandra.global-endpoint/>
+            <azure.cosmos.cassandra.username/>
+            <azure.cosmos.cassandra.password/>
+            <!-- Cosmos load balancing options -->
+            <azure.cosmos.cassandra.multi-region-writes>true</azure.cosmos.cassandra.multi-region-writes>
+            <azure.cosmos.cassandra.preferred-regions/>
+            <!-- Java truststore configuration -->
+            <azure.cosmos.cassandra.truststore.path/>
+            <azure.cosmos.cassandra.truststore.password/>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.2.0</version>
         <configuration>
@@ -85,7 +206,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>libs/</classpathPrefix>
-              <mainClass>com.azure.cosmos.cassandra.examples.UserProfile</mainClass>
+              <mainClass>com.azure.cosmos.cassandra.example.UserProfile</mainClass>
             </manifest>
           </archive>
         </configuration>

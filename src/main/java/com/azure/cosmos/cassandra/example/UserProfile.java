@@ -1,9 +1,8 @@
-package com.azure.cosmos.cassandra.examples;
+package com.azure.cosmos.cassandra.example;
 
+import com.azure.cosmos.cassandra.example.data.UserRepository;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.javafaker.Faker;
-import com.azure.cosmos.cassandra.repository.UserRepository;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +32,15 @@ public class UserProfile {
     AtomicLong totalLatency = new AtomicLong(0);
     AtomicLong totalReadLatency = new AtomicLong(0);
 
-    public void loadTest(final String keyspace, final String table, final UserRepository repository,
-                         final UserProfile u, final String preparedStatement, final String finalQuery,
-                         final int noOfThreads, final int noOfWritesPerThread) throws InterruptedException {
+    public void loadTest(
+        final String keyspace,
+        final String table,
+        final UserRepository repository,
+        final UserProfile u,
+        final String preparedStatement,
+        final String finalQuery,
+        final int noOfThreads,
+        final int noOfWritesPerThread) throws InterruptedException {
 
         final Faker faker = new Faker();
         final ExecutorService es = Executors.newCachedThreadPool();
@@ -65,16 +70,22 @@ public class UserProfile {
             };
             es.execute(task);
         }
+
         es.shutdown();
+
         final boolean finished = es.awaitTermination(5, TimeUnit.MINUTES);
+
         if (finished) {
+
             Thread.sleep(5000);
             final long latency = (this.totalLatency.get() / this.insertCount.get());
 
             //lets look at latency for reads in local region by reading all the records just written
             final int readcount = NUMBER_OF_THREADS * NUMBER_OF_WRITES_PER_THREAD;
             long noOfUsersInTable = 0;
+
             noOfUsersInTable = repository.selectUserCount(finalQuery);
+
             for (final String id : this.docIDs) {
                 final long startTime = System.currentTimeMillis();
                 repository.selectUser(id, keyspace, table);
@@ -83,47 +94,70 @@ public class UserProfile {
                 System.out.print("read duration time millis: " + duration + "\n");
                 this.totalReadLatency.getAndAdd(duration);
             }
+
             System.out.println("count of inserts attempted: " + u.recordCount);
             System.out.println("count of users in table: " + noOfUsersInTable);
+
             final long readLatency = (this.totalReadLatency.get() / readcount);
             System.out.print("Average write Latency: " + latency + "\n");
             System.out.println("Average read latency: " + readLatency);
             System.out.println("Finished executing all threads.");
+
             System.exit(0);
         }
-
     }
 
-    public static void main(final String[] s) throws Exception {
+    public static void main(final String[] args) {
 
-        final UserProfile u = new UserProfile();
-        final String keyspace = "uprofile";
+        final String keyspace = "azure_cosmos_cassandra_driver_4_examples";
+        final UserProfile userProfile = new UserProfile();
         final String table = "user";
 
         try (final CqlSession session = CqlSession.builder().build()) {
+
             final UserRepository repository = new UserRepository(session);
-            //Create keyspace and table in cassandra database
-            repository.deleteTable("DROP KEYSPACE IF EXISTS " + keyspace + "");
-            System.out.println("Done dropping " + keyspace + "... ");
-            repository.createKeyspace("CREATE KEYSPACE " + keyspace
+
+            // Create keyspace and table in database
+
+            repository.createKeyspace("CREATE KEYSPACE IF NOT EXISTS " + keyspace
                 + " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'datacenter1' : 1 }");
-            System.out.println("Done creating " + keyspace + " keyspace... ");
-            repository.createTable("CREATE TABLE " + keyspace + "." + table
-                + " (user_id text PRIMARY KEY, user_name text, user_bcity text)");
-            Thread.sleep(5000);
-            System.out.println("Done creating " + table + " table... ");
-            LOGGER.info("inserting records....");
+
+            repository.dropTable("DROP TABLE IF EXISTS " + keyspace + "." + table);
+
+            repository.createTable("CREATE TABLE " + keyspace + "." + table + " ("
+                + "user_id text PRIMARY KEY,"
+                + "user_name text,"
+                + "user_bcity text)");
+
+            Thread.sleep(5_000);
+
+            System.out.println("Done creating " + keyspace + "." + table + " table...");
+            LOGGER.info("inserting records...");
 
             //Setup load test queries
-            final String loadTestPreparedStatement = "insert into " + keyspace + "." + table + " (user_bcity,user_id," +
-                "user_name) VALUES (?,?,?)";
+
+            final String loadTestPreparedStatement = "INSERT INTO " + keyspace + "." + table + " ("
+                + "user_bcity,"
+                + "user_id,"
+                + "user_name) "
+                + "VALUES (?,?,?)";
+
             final String loadTestFinalSelectQuery = "SELECT COUNT(*) as coun FROM " + keyspace + "." + table + "";
 
             // Run Load Test - Insert rows into user table
-            u.loadTest(keyspace, table, repository, u, loadTestPreparedStatement, loadTestFinalSelectQuery,
-                NUMBER_OF_THREADS, NUMBER_OF_WRITES_PER_THREAD);
-        } catch (final Exception e) {
-            System.out.println("Main Exception " + e);
+
+            userProfile.loadTest(
+                keyspace,
+                table,
+                repository,
+                userProfile,
+                loadTestPreparedStatement,
+                loadTestFinalSelectQuery,
+                NUMBER_OF_THREADS,
+                NUMBER_OF_WRITES_PER_THREAD);
+
+        } catch (final Exception error) {
+            System.out.println("Main Exception " + error);
         }
     }
 }

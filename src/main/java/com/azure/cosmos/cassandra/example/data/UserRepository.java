@@ -1,4 +1,4 @@
-package com.azure.cosmos.cassandra.repository;
+package com.azure.cosmos.cassandra.example.data;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -49,7 +49,7 @@ public class UserRepository {
     /**
      * Delete user table.
      */
-    public void deleteTable(final String queryString) {
+    public void dropTable(final String queryString) {
         final String query = queryString;
         this.session.execute(query);
     }

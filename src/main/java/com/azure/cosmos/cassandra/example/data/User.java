@@ -1,4 +1,4 @@
-package com.azure.cosmos.cassandra.repository;
+package com.azure.cosmos.cassandra.example.data;
 
 /**
  * User table entity class
