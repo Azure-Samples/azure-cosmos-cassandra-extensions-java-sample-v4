@@ -1,6 +1,8 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.cosmos.cassandra.example;
 
-import com.azure.cosmos.cassandra.example.data.UserRepository;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.javafaker.Faker;
 import org.slf4j.Logger;
@@ -32,11 +34,25 @@ public class UserProfile {
     AtomicLong totalLatency = new AtomicLong(0);
     AtomicLong totalReadLatency = new AtomicLong(0);
 
+    /**
+     * Runs a load test.
+     *
+     * @param keyspace            Keyspace name.
+     * @param table               Table name.
+     * @param repository          Reference to a {@link UserRepository user repository}.
+     * @param userProfile         Reference to a {@link UserProfile user profile}.
+     * @param preparedStatement   A prepared statement.
+     * @param finalQuery          A final query.
+     * @param noOfThreads         Number of threads to create.
+     * @param noOfWritesPerThread Number of writes per thread.
+     *
+     * @throws InterruptedException If the load test is interrupted.
+     */
     public void loadTest(
         final String keyspace,
         final String table,
         final UserRepository repository,
-        final UserProfile u,
+        final UserProfile userProfile,
         final String preparedStatement,
         final String finalQuery,
         final int noOfThreads,
@@ -54,16 +70,16 @@ public class UserProfile {
                     try {
                         final String name = faker.name().lastName();
                         final String city = faker.address().city();
-                        u.recordCount.incrementAndGet();
+                        userProfile.recordCount.incrementAndGet();
                         final long startTime = System.currentTimeMillis();
                         repository.insertUser(preparedStatement, guid.toString(), name, city);
                         final long endTime = System.currentTimeMillis();
                         final long duration = (endTime - startTime);
                         System.out.print("insert duration time millis: " + duration + "\n");
                         this.totalLatency.getAndAdd(duration);
-                        u.insertCount.incrementAndGet();
+                        userProfile.insertCount.incrementAndGet();
                     } catch (final Exception e) {
-                        u.exceptionCount.incrementAndGet();
+                        userProfile.exceptionCount.incrementAndGet();
                         System.out.println("Exception: " + e);
                     }
                 }
@@ -95,7 +111,7 @@ public class UserProfile {
                 this.totalReadLatency.getAndAdd(duration);
             }
 
-            System.out.println("count of inserts attempted: " + u.recordCount);
+            System.out.println("count of inserts attempted: " + userProfile.recordCount);
             System.out.println("count of users in table: " + noOfUsersInTable);
 
             final long readLatency = (this.totalReadLatency.get() / readcount);
@@ -107,13 +123,18 @@ public class UserProfile {
         }
     }
 
+    /**
+     * Entry point to the application.
+     *
+     * @param args an array of command line arguments.
+     */
     public static void main(final String[] args) {
 
         final String keyspace = "azure_cosmos_cassandra_driver_4_examples";
         final UserProfile userProfile = new UserProfile();
         final String table = "user";
 
-        try (final CqlSession session = CqlSession.builder().build()) {
+        try (CqlSession session = CqlSession.builder().build()) {
 
             final UserRepository repository = new UserRepository(session);
 

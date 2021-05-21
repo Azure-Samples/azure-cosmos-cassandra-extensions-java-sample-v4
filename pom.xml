@@ -4,20 +4,26 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.azure</groupId>
   <artifactId>azure-cosmos-cassandra-java-driver-app-example</artifactId>
+  <groupId>com.azure</groupId>
+  <packaging>jar</packaging>
   <version>1.0.0</version>
+
+  <description>
+    Illustrates use of DataStax Java Driver 4 for Apache Cassandra with Azure Cosmos awareness features.
+  </description>
+
   <properties>
     <!-- Main dependency versions -->
     <version.cassandra-driver>[4.7,4.12)</version.cassandra-driver>
     <version.log4j>[2.14,2.15)</version.log4j>
     <version.slf4j>[1.7,1.8.0-alpha0)</version.slf4j>
     <version.javafaker>0.17.2</version.javafaker>
-    <version.org.apache.commons.io>2.4</version.org.apache.commons.io>
     <!-- Test dependency versions -->
     <version.assertj>[3.18,3.19)</version.assertj>
     <version.junit-jupiter>[5.7,5.8)</version.junit-jupiter>
   </properties>
+
   <dependencies>
     <!-- Main dependencies -->
     <dependency>
@@ -50,11 +56,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>${version.slf4j}</version>
     </dependency>
-    <dependency>
-      <artifactId>org.apache.commons.io</artifactId>
-      <groupId>org.apache.directory.studio</groupId>
-      <version>${version.org.apache.commons.io}</version>
-    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.assertj</groupId>
@@ -75,6 +76,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -148,13 +150,6 @@
     </pluginManagement>
     <plugins>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
@@ -213,4 +208,150 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+
+    <!-- Setup for Java 8, excludes module-info.java -->
+    <profile>
+      <id>java-8</id>
+      <activation>
+        <jdk>[1.8,9)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+      </properties>
+      <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <configuration>
+              <configLocation>azure-cosmos-style.xml</configLocation>
+              <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
+              <encoding>UTF-8</encoding>
+              <consoleOutput>true</consoleOutput>
+              <failsOnError>true</failsOnError>
+              <linkXRef>false</linkXRef>
+            </configuration>
+            <executions>
+              <execution>
+                <id>validate</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- Don't compile module-info.java, see java-lts profile -->
+          <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <source>1.8</source>
+              <target>1.8</target>
+              <excludes>
+                <exclude>module-info.java</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+          <!-- Avoid errors from module-info -->
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <sourceFileExcludes>
+                <sourceFileExclude>module-info.java</sourceFileExclude>
+              </sourceFileExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <reporting>
+        <plugins>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <sourceFileExcludes>
+                <sourceFileExclude>module-info.java</sourceFileExclude>
+              </sourceFileExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </reporting>
+    </profile>
+
+    <!-- Setup for Java LTS+, currently JDK 11 and up -->
+    <profile>
+      <id>java-lts</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+      <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <configuration>
+              <configLocation>azure-cosmos-style.xml</configLocation>
+              <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
+              <encoding>UTF-8</encoding>
+              <consoleOutput>true</consoleOutput>
+              <failsOnError>true</failsOnError>
+              <linkXRef>false</linkXRef>
+            </configuration>
+            <executions>
+              <execution>
+                <id>validate</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <source>11</source>
+              <target>11</target>
+            </configuration>
+            <executions>
+              <!-- Compile first with module-info for Java LTS -->
+              <execution>
+                <id>default-compile</id>
+                <configuration>
+                  <release>11</release>
+                </configuration>
+              </execution>
+              <!-- Compile next without module-info for Java 8 -->
+              <execution>
+                <id>base-compile</id>
+                <goals>
+                  <goal>compile</goal>
+                </goals>
+                <configuration>
+                  <release>8</release>
+                  <excludes>
+                    <exclude>module-info.java</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
 </project>
