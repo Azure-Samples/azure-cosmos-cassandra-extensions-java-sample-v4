@@ -16,7 +16,7 @@ import java.util.Objects;
 import static com.datastax.oss.driver.api.core.ConsistencyLevel.QUORUM;
 
 /**
- * This class gives implementations of create, delete table on Cassandra database Insert & select data from the table
+ * This class gives implementations of create, delete table on Cassandra database Insert and Select data from the table.
  */
 @SuppressWarnings("UnnecessaryLocalVariable")
 public class UserRepository {

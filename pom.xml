@@ -1,6 +1,10 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!--
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the MIT License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -14,6 +18,8 @@
   </description>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javadoc.options/>
     <!-- Main dependency versions -->
     <version.cassandra-driver>[4.7,4.12)</version.cassandra-driver>
     <version.log4j>[2.14,2.15)</version.log4j>
@@ -30,31 +36,37 @@
       <groupId>com.azure</groupId>
       <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
       <version>[${project.version}]</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${version.cassandra-driver}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-query-builder</artifactId>
       <version>${version.cassandra-driver}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.javafaker</groupId>
       <artifactId>javafaker</artifactId>
       <version>${version.javafaker}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j-impl</artifactId>
       <version>${version.log4j}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${version.slf4j}</version>
+      <scope>compile</scope>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
@@ -150,6 +162,25 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <configLocation>azure-cosmos-style.xml</configLocation>
+          <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <linkXRef>false</linkXRef>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
@@ -195,7 +226,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.2.0</version>
         <configuration>
           <archive>
             <manifest>
@@ -206,11 +236,75 @@
           </archive>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <inherited>true</inherited>
+        <configuration>
+          <docfilessubdirs>false</docfilessubdirs>
+          <doclint>all,-html</doclint>
+          <quiet>true</quiet>
+          <verbose>false</verbose>
+          <sourceFileExcludes>
+            <sourceFileExclude>**/implementation/**/*.java</sourceFileExclude>
+          </sourceFileExcludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <propertiesEncoding>UTF-8</propertiesEncoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <configuration>
+          <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory>
+          <effort>max</effort>
+          <failOnError>true</failOnError>
+          <fork>true</fork>
+          <includeTests>true</includeTests>
+          <threshold>Low</threshold>
+          <xmlOutput>true</xmlOutput>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <profiles>
-
     <!-- Setup for Java 8, excludes module-info.java -->
     <profile>
       <id>java-8</id>
@@ -229,27 +323,7 @@
           </resource>
         </resources>
         <plugins>
-          <plugin>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <configuration>
-              <configLocation>azure-cosmos-style.xml</configLocation>
-              <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
-              <encoding>UTF-8</encoding>
-              <consoleOutput>true</consoleOutput>
-              <failsOnError>true</failsOnError>
-              <linkXRef>false</linkXRef>
-            </configuration>
-            <executions>
-              <execution>
-                <id>validate</id>
-                <phase>validate</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- Don't compile module-info.java, see java-lts profile -->
+          <!-- Don't compile module-info.java -->
           <plugin>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
@@ -260,7 +334,7 @@
               </excludes>
             </configuration>
           </plugin>
-          <!-- Avoid errors from module-info -->
+          <!-- Don't document module-info.java -->
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
@@ -273,6 +347,7 @@
       </build>
       <reporting>
         <plugins>
+          <!-- Don't document module-info.java -->
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
@@ -284,7 +359,6 @@
         </plugins>
       </reporting>
     </profile>
-
     <!-- Setup for Java LTS+, currently JDK 11 and up -->
     <profile>
       <id>java-lts</id>
@@ -299,26 +373,6 @@
           </resource>
         </resources>
         <plugins>
-          <plugin>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <configuration>
-              <configLocation>azure-cosmos-style.xml</configLocation>
-              <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
-              <encoding>UTF-8</encoding>
-              <consoleOutput>true</consoleOutput>
-              <failsOnError>true</failsOnError>
-              <linkXRef>false</linkXRef>
-            </configuration>
-            <executions>
-              <execution>
-                <id>validate</id>
-                <phase>validate</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>

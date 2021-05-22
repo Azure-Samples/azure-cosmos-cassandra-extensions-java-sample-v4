@@ -5,6 +5,7 @@ package com.azure.cosmos.cassandra.example;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.javafaker.Faker;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,8 +119,6 @@ public class UserProfile {
             System.out.print("Average write Latency: " + latency + "\n");
             System.out.println("Average read latency: " + readLatency);
             System.out.println("Finished executing all threads.");
-
-            System.exit(0);
         }
     }
 
@@ -128,6 +127,7 @@ public class UserProfile {
      *
      * @param args an array of command line arguments.
      */
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False positive on Java 11")
     public static void main(final String[] args) {
 
         final String keyspace = "azure_cosmos_cassandra_driver_4_examples";
@@ -177,8 +177,9 @@ public class UserProfile {
                 NUMBER_OF_THREADS,
                 NUMBER_OF_WRITES_PER_THREAD);
 
-        } catch (final Exception error) {
+        } catch (final Throwable error) {
             System.out.println("Main Exception " + error);
+            System.exit(1);
         }
     }
 }
