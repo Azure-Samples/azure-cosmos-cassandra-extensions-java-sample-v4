@@ -127,7 +127,7 @@ public class UserProfile {
      *
      * @param args an array of command line arguments.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False positive on Java 11")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     public static void main(final String[] args) {
 
         final String keyspace = "azure_cosmos_cassandra_driver_4_examples";

@@ -128,7 +128,7 @@ public class ApplicationCommandLineRunnerTest {
         List<String> expectedOutput;
         IOException error;
 
-        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             expectedOutput = reader.lines().collect(Collectors.toList());
             error = null;
         } catch (final IOException exception) {
@@ -152,7 +152,10 @@ public class ApplicationCommandLineRunnerTest {
 
     // region Methods
 
-    @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
+    /**
+     * Creates the azure_cosmos_cassandra_driver_4_examples keyspace, if it doesn't already exist.
+     */
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @BeforeEach
     public void createKeyspaceIfNotExists() {
@@ -163,7 +166,7 @@ public class ApplicationCommandLineRunnerTest {
             System.setProperty("AZURE_COSMOS_CASSANDRA_PREFERRED_REGION_" + (++i), preferredRegion);
         }
 
-        try (final CqlSession session = CqlSession.builder().build()) {
+        try (CqlSession session = CqlSession.builder().build()) {
             session.execute(SimpleStatement.newInstance("CREATE KEYSPACE IF NOT EXISTS "
                 + "azure_cosmos_cassandra_driver_4_examples WITH "
                 + "REPLICATION={"
@@ -183,7 +186,7 @@ public class ApplicationCommandLineRunnerTest {
      *
      * @param multiRegionWrites {@code true} if multi-region writes should be enabled; otherwise {@code false}.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "false alarm")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
@@ -213,7 +216,7 @@ public class ApplicationCommandLineRunnerTest {
 
         final List<String> output;
 
-        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
             StandardCharsets.UTF_8))) {
             output = reader.lines().collect(Collectors.toList());
         } catch (final IOException error) {
@@ -223,7 +226,7 @@ public class ApplicationCommandLineRunnerTest {
 
         final File outputFile = outputPath.toFile();
 
-        try (final Writer writer = new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8)) {
             for (final String line : output) {
                 writer.write(line);
                 writer.write('\n');
@@ -257,7 +260,7 @@ public class ApplicationCommandLineRunnerTest {
             out.println("output-file: " + outputFile);
             out.println("environment: " + builder.environment());
 
-            try (final BufferedReader reader = Files.newBufferedReader(logFile, StandardCharsets.UTF_8)) {
+            try (BufferedReader reader = Files.newBufferedReader(logFile, StandardCharsets.UTF_8)) {
                 reader.lines().forEach(out::println);
             } catch (final IOException error) {
                 out.println("---------------------------------------------------------------------------------");
