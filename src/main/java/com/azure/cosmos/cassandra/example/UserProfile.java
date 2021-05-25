@@ -132,7 +132,7 @@ public class UserProfile {
 
         final String keyspace = "azure_cosmos_cassandra_driver_4_examples";
         final UserProfile userProfile = new UserProfile();
-        final String table = "user";
+        final String table = "user" + System.getProperty("azure.cosmos.cassandra.run-id", "");
 
         try (CqlSession session = CqlSession.builder().build()) {
 

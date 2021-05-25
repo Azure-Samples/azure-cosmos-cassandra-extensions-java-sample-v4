@@ -8,6 +8,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,6 +60,7 @@ public class ApplicationCommandLineRunnerTest {
     private static final Map<String, String> VARIABLES = new TreeMap<>();
 
     static final List<String> EXPECTED_OUTPUT;
+    static final String RUN_ID;
 
     static final String JAVA = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
 
@@ -95,7 +98,7 @@ public class ApplicationCommandLineRunnerTest {
 
     static final String JAVA_OPTIONS = getPropertyOrEnvironmentVariable(
         "azure.cosmos.cassandra.java.options",
-        null);
+        "");
 
     private static final long TIMEOUT_IN_MINUTES = 2;
 
@@ -146,6 +149,9 @@ public class ApplicationCommandLineRunnerTest {
         for (final String preferredRegion : PREFERRED_REGIONS) {
             VARIABLES.put("AZURE_COSMOS_CASSANDRA_PREFERRED_REGION_" + ++i, preferredRegion);
         }
+
+        final UUID uuid = UUID.randomUUID();
+        RUN_ID = "_" + Long.toHexString(uuid.getMostSignificantBits() ^ uuid.getLeastSignificantBits());
     }
 
     // endregion
@@ -153,7 +159,7 @@ public class ApplicationCommandLineRunnerTest {
     // region Methods
 
     /**
-     * Creates the azure_cosmos_cassandra_driver_4_examples keyspace, if it doesn't already exist.
+     * Creates the azure_cosmos_cassandra_driver_4_examples keyspace, if it does not already exist.
      */
     @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -174,6 +180,18 @@ public class ApplicationCommandLineRunnerTest {
                 + "   'replication_factor':4"
                 + "} AND "
                 + "cosmosdb_provisioned_throughput=100000").setConsistencyLevel(ConsistencyLevel.ALL));
+        } catch (final Throwable error) {
+            fail("could not create table azure_cosmos_cassandra_driver_4_examples.people", error);
+        }
+    }
+
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @AfterAll
+    public static void dropTableIfExists() {
+
+        try (CqlSession session = CqlSession.builder().build()) {
+            session.execute("DROP TABLE IF EXISTS azure_cosmos_cassandra_driver_4_examples.user" + RUN_ID);
         } catch (final Throwable error) {
             fail("could not create table azure_cosmos_cassandra_driver_4_examples.people", error);
         }
@@ -201,6 +219,7 @@ public class ApplicationCommandLineRunnerTest {
         assertThatCode(() -> Files.deleteIfExists(outputPath)).doesNotThrowAnyException();
 
         final ProcessBuilder builder = new ProcessBuilder(getCommand(multiRegionWrites));
+        VARIABLES.put("AZURE_COSMOS_CASSANDRA_LOG_FILE", logFile.toString());
         builder.environment().putAll(VARIABLES);
         final Process process;
 
@@ -246,32 +265,41 @@ public class ApplicationCommandLineRunnerTest {
         try {
             assertThat(process.exitValue()).isEqualTo(0);
             assertThat(output).hasSize(EXPECTED_OUTPUT.size());
-            assertThat(output).startsWith(EXPECTED_OUTPUT.get(0));
+            assertThat(output).startsWith(String.format(EXPECTED_OUTPUT.get(0), RUN_ID));
             assertThat(output).endsWith(EXPECTED_OUTPUT.get(EXPECTED_OUTPUT.size() - 1));
 
         } catch (final AssertionError assertionError) {
 
             out.println("---------------------------------------------------------------------------------");
-            out.println("LOG DUMP");
+            out.println("ERROR DUMP");
             out.println("---------------------------------------------------------------------------------");
             out.println("command = " + builder.command());
             out.println("exit-value: " + process.exitValue());
             out.println("log-file: " + logFile);
             out.println("output-file: " + outputFile);
             out.println("environment: " + builder.environment());
+            out.println();
+            out.println("OUTPUT");
+            out.println("------");
+
+            for (String line : output) {
+                out.println(line);
+            }
+
+            out.println();
+            out.println("LOG");
+            out.println("--------");
 
             try (BufferedReader reader = Files.newBufferedReader(logFile, StandardCharsets.UTF_8)) {
                 reader.lines().forEach(out::println);
             } catch (final IOException error) {
-                out.println("---------------------------------------------------------------------------------");
-                out.println("LOG DUMP ERROR");
-                out.println("---------------------------------------------------------------------------------");
+                out.println("Failed to dump log file " + logFile + " due to: " + error);
                 error.printStackTrace(out);
                 assertionError.addSuppressed(error);
             }
 
             out.println("---------------------------------------------------------------------------------");
-            out.println("LOG DUMP END: ");
+            out.println("ERROR DUMP END");
             out.println("---------------------------------------------------------------------------------");
 
             throw assertionError;
@@ -331,6 +359,7 @@ public class ApplicationCommandLineRunnerTest {
 
         System.setProperty("azure.cosmos.cassandra.multi-region-writes", multiRegionWrites ? "true" : "false");
         command.add("-Dazure.cosmos.cassandra.multi-region-writes=" + (multiRegionWrites ? "true" : "false"));
+        command.add("-Dazure.cosmos.cassandra.run-id=" + RUN_ID);
 
         for (final Map.Entry<String, String> property : PROPERTIES.entrySet()) {
             command.add("-D" + property.getKey() + '=' + property.getValue());
