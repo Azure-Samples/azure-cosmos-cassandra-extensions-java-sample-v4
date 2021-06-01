@@ -73,9 +73,9 @@ Note that `application.conf` contains settings that override [reference.conf](ht
 
    ![Console output](./media/regions.png)
 
-1. Run `mvn clean package` from java-examples folder to build the project. This will generate azure-cosmos-cassandra-examples-1.0.1-SNAPSHOT.jar under target folder.
+1. Run `mvn clean package` from java-examples folder to build the project. This will generate azure-cosmos-cassandra-examples-1.0.1.jar under target folder.
  
-1. Run `java -jar target/azure-cosmos-cassandra-examples-1.0.1-SNAPSHOT.jar` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
+1. Run `java -jar target/azure-cosmos-cassandra-examples-1.0.1.jar` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
 
    ![Console output](./media/output.png)
 
