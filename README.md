@@ -15,7 +15,7 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
 ```
 
