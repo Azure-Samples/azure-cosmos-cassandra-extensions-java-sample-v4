@@ -3,9 +3,9 @@
 
 package com.azure.cosmos.cassandra.example;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
+import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.AfterAll;
@@ -37,6 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.System.out;
 import static java.util.Objects.requireNonNull;
@@ -64,6 +65,10 @@ public class ApplicationCommandLineRunnerTest {
 
     static final String JAVA = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
 
+    static final String JAVA_OPTIONS = getPropertyOrEnvironmentVariable(
+        "azure.cosmos.cassandra.java.options",
+        "");
+
     static final String JAR = getPropertyOrEnvironmentVariable(
         "azure.cosmos.cassandra.jar",
         null);
@@ -80,25 +85,25 @@ public class ApplicationCommandLineRunnerTest {
         "azure.cosmos.cassandra.password",
         null);
 
-    static final List<String> PREFERRED_REGIONS = Arrays.asList(getPropertyOrEnvironmentVariable(
-        "azure.cosmos.cassandra.preferred-regions",
-        "").split("\\s*,\\s*"));
+    static final String TRUSTSTORE_PATH = getPropertyOrEnvironmentVariable(
+        "azure.cosmos.cassandra.truststore-path",
+        null);
 
     static final String TRUSTSTORE_PASSWORD = getPropertyOrEnvironmentVariable(
         "azure.cosmos.cassandra.truststore-password",
         null);
 
-    static final String TRUSTSTORE_PATH = getPropertyOrEnvironmentVariable(
-        "azure.cosmos.cassandra.truststore-path",
-        null);
+    static final List<String> PREFERRED_REGIONS = Arrays.asList(getPropertyOrEnvironmentVariable(
+        "azure.cosmos.cassandra.preferred-regions",
+        "").split("\\s*,\\s*"));
+
+    static final int AUTOSCALE_MAX_THROUGHPUT = Integer.parseUnsignedInt(getPropertyOrEnvironmentVariable(
+        "azure.cosmos.cassandra.autoscale-max-throughput",
+        "0"));
 
     static final String LOG_PATH = getPropertyOrEnvironmentVariable(
         "azure.cosmos.cassandra.log-path",
         Paths.get(System.getProperty("user.home"), ".local", "var", "log").toString());
-
-    static final String JAVA_OPTIONS = getPropertyOrEnvironmentVariable(
-        "azure.cosmos.cassandra.java.options",
-        "");
 
     private static final long TIMEOUT_IN_MINUTES = 2;
 
@@ -173,15 +178,25 @@ public class ApplicationCommandLineRunnerTest {
         }
 
         try (CqlSession session = CqlSession.builder().build()) {
-            session.execute(SimpleStatement.newInstance("CREATE KEYSPACE IF NOT EXISTS "
-                + "azure_cosmos_cassandra_driver_4_examples WITH "
-                + "REPLICATION={"
-                + "'class':'SimpleStrategy',"
-                + "   'replication_factor':4"
-                + "} AND "
-                + "cosmosdb_provisioned_throughput=100000").setConsistencyLevel(ConsistencyLevel.ALL));
+
+            CreateKeyspace createKeyspace = SchemaBuilder.createKeyspace("azure_cosmos_cassandra_driver_4_examples")
+                .ifNotExists()
+                .withReplicationOptions(
+                    Stream.of(new Object[][] {
+                        { "class", "SimpleStrategy" },
+                        { "replication_factor", 4 }
+                    }).collect(Collectors.toMap(data -> (String) data[0], data -> data[1])));
+
+            if (AUTOSCALE_MAX_THROUGHPUT > 0) {
+                createKeyspace = createKeyspace.withOption(
+                    "cosmosdb_autoscale_max_throughput",
+                    AUTOSCALE_MAX_THROUGHPUT);
+            }
+
+            session.execute(createKeyspace.build());
+
         } catch (final Throwable error) {
-            fail("could not create table azure_cosmos_cassandra_driver_4_examples.people", error);
+            fail("could not create keyspace azure_cosmos_cassandra_driver_4_examples", error);
         }
     }
 
@@ -189,11 +204,10 @@ public class ApplicationCommandLineRunnerTest {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @AfterAll
     public static void dropTableIfExists() {
-
         try (CqlSession session = CqlSession.builder().build()) {
             session.execute("DROP TABLE IF EXISTS azure_cosmos_cassandra_driver_4_examples.user" + RUN_ID);
         } catch (final Throwable error) {
-            fail("could not create table azure_cosmos_cassandra_driver_4_examples.people", error);
+            fail("could not drop table azure_cosmos_cassandra_driver_4_examples.people", error);
         }
     }
 
@@ -282,7 +296,7 @@ public class ApplicationCommandLineRunnerTest {
             out.println("OUTPUT");
             out.println("------");
 
-            for (String line : output) {
+            for (final String line : output) {
                 out.println(line);
             }
 
