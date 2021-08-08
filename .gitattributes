@@ -1,2 +1,3 @@
 # Lines of all text files end with lf, not crlf
 * text eol=lf
+*.png binary
