@@ -11,7 +11,7 @@ Licensed under the MIT License.
   <artifactId>azure-cosmos-cassandra-java-driver-app-example</artifactId>
   <groupId>com.azure</groupId>
   <packaging>jar</packaging>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 
   <description>
     Illustrates use of DataStax Java Driver 4 for Apache Cassandra with Azure Cosmos awareness features.
@@ -227,6 +227,7 @@ Licensed under the MIT License.
           <execution>
             <goals>
               <goal>integration-test</goal>
+              <goal>verify</goal>
             </goals>
           </execution>
         </executions>
@@ -285,6 +286,9 @@ Licensed under the MIT License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <useModulePath>false</useModulePath>
+          <excludes>
+            <exclude>ApplicationCommandLineRunnerTest</exclude>
+          </excludes>
         </configuration>
       </plugin>
       <plugin>
