@@ -8,10 +8,11 @@ Licensed under the MIT License.
 
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Azure Cosmos Extensions for Apache Cassandra | Java app example</name>
+  <name>Azure Cosmos Extensions for Apache Cassandra | Java App Example </name>
   <description>
     Illustrates use of DataStax Java Driver 4 for Apache Cassandra with Azure Cosmos awareness features.
   </description>
+  <url>https://docs.microsoft.com/en-us/azure/cosmos-db/cassandra-introduction</url>
 
   <artifactId>azure-cosmos-cassandra-java-driver-app-example</artifactId>
   <groupId>com.azure</groupId>
@@ -35,6 +36,13 @@ Licensed under the MIT License.
       <url>http://www.opensource.org/licenses/mit-license.php</url>
     </license>
   </licenses>
+
+  <scm>
+    <developerConnection>scm:git:git@github.com:Azure-Samples/azure-cosmos-cassandra-extensions-java-sample-v4.git</developerConnection>
+    <connection>scm:git:git@github.com:Azure-Samples/azure-cosmos-cassandra-extensions-java-sample-v4.git</connection>
+    <url>scm:git:https://github.com/Azure-Samples/azure-cosmos-cassandra-extensions-java-sample-v4</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -84,14 +92,14 @@ Licensed under the MIT License.
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${version.slf4j}</version>
+      <version>${version.slf4j-api}</version>
       <scope>compile</scope>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>${version.assertj}</version>
+      <version>${version.assertj-core}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -164,7 +172,7 @@ Licensed under the MIT License.
         </plugin>
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.9.1</version>
+          <version>3.12.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -190,10 +198,11 @@ Licensed under the MIT License.
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
-          <configLocation>azure-cosmos-style.xml</configLocation>
+          <configLocation>azure-cosmos.checkstyle.xml</configLocation>
           <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <linkXRef>false</linkXRef>
         </configuration>
         <executions>
