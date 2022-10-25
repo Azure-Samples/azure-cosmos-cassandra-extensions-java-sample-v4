@@ -166,7 +166,8 @@ public class ApplicationCommandLineRunnerTest {
     /**
      * Creates the azure_cosmos_cassandra_driver_4_examples keyspace, if it does not already exist.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
+        justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @BeforeEach
     public void createKeyspaceIfNotExists() {
@@ -200,7 +201,13 @@ public class ApplicationCommandLineRunnerTest {
         }
     }
 
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
+    /**
+     * Drops the azure_cosmos_cassandra_driver_4_examples.user table, if it exists.
+     * <p>
+     * This is done in a {@link CqlSession CqlSession} created for the task.
+     */
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
+        justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @AfterAll
     public static void dropTableIfExists() {
@@ -218,8 +225,6 @@ public class ApplicationCommandLineRunnerTest {
      *
      * @param multiRegionWrites {@code true} if multi-region writes should be enabled; otherwise {@code false}.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     public void run(final boolean multiRegionWrites) {
@@ -249,7 +254,8 @@ public class ApplicationCommandLineRunnerTest {
 
         final List<String> output;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+            process.getInputStream(),
             StandardCharsets.UTF_8))) {
             output = reader.lines().collect(Collectors.toList());
         } catch (final IOException error) {
@@ -333,9 +339,8 @@ public class ApplicationCommandLineRunnerTest {
     // region Privates
 
     /**
-     * Returns the base name of the file or directory denoted by {@code path} as a {@linkplain String string}.
-     *
-     * The base name is the file name without its extension.
+     * Returns the base name of the file or directory denoted by {@code path} as a {@linkplain String string}. The base
+     * name is the file name without its extension.
      *
      * @param path A relative or absolute path name.
      *
@@ -352,10 +357,9 @@ public class ApplicationCommandLineRunnerTest {
     }
 
     /**
-     * Gets the command line for a test run.
-     *
-     * The command line constructed enables or disables multi-region writes by setting the value of system property
-     * {@code azure.cosmos.cassandra.multi-region-writes} to {@code true} or {@code false}.
+     * Gets the command line for a test run. The command line constructed enables or disables multi-region writes by
+     * setting the value of system property {@code azure.cosmos.cassandra.multi-region-writes} to {@code true} or {@code
+     * false}.
      *
      * @param multiRegionWrites {@code true} if multi-region writes should be enabled; otherwise {@code false}.
      *
