@@ -10,14 +10,14 @@ urlFragment: azure-cosmos-cassandra-extensions-java-sample-v4
 
 # Using Retry and Load Balancing policies in Azure Cosmos DB Cassandra API (v4 Driver)
 
-Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.1.3) for the [Java v4 Datastax Apache Cassandra OSS Driver](https://github.com/datastax/java-driver/tree/4.x). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/1.1.3/jar). 
+Azure Cosmos DB is a globally distributed multi-model database. One of the supported APIs is the Cassandra API. This sample illustrates how to handle rate limited requests, also known as [429 errors](https://docs.microsoft.com/rest/api/cosmos-db/http-status-codes-for-cosmosdb) (when consumed throughput exceeds the number of [Request Units](https://docs.microsoft.com/azure/cosmos-db/request-units) provisioned for the service), and use a load balancing policy to specify preferred read or write regions. In this code sample, we implement the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.1.2) for the [Java v4 Datastax Apache Cassandra OSS Driver](https://github.com/datastax/java-driver/tree/4.x). The extension JAR is offered as a **public preview** release [in maven](https://search.maven.org/artifact/com.azure/azure-cosmos-cassandra-driver-4-extensions/1.1.2/jar). 
 
 ```xml
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
-            <version>1.1.3</version>
-        </dependency>
+<dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-cosmos-cassandra-driver-4-extensions</artifactId>
+  <version>1.1.2</version>
+</dependency>
 ```
 
 
@@ -53,30 +53,20 @@ Azure Cosmos DB is a globally distributed multi-model database. One of the suppo
       basic {   
         contact-points = [${AZURE_COSMOS_CASSANDRA_GLOBAL_ENDPOINT}]    
         load-balancing-policy {
-          # Global endpoint for connecting to Cassandra
-          #
-          #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
-          #   Writes will go to the default write region when global-endpoint is specified.
-          #
-          #   When global-endpoint is not specified, you must specify values for read-datacenter, write-datacenter, and
-          #   datastax-java-driver.basic.contact-points.
-          #
-          #   Set the variables referenced here to match the topology and preferences for your
-          #   Cosmos DB Cassandra API instance.
-          global-endpoint = ""
-          read-datacenter = "Australia East"
-          write-datacenter = "UK South"
+          multi-region-writes = true
+          preferred-regions = "Australia East", "UK South"
         }
       }
     ``` 
 
-Note that `application.conf` contains settings that override [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/release/java-driver-4/1.1.3/package/src/main/resources/reference.conf) in the [Azure Cosmos DB extension for Cassandra API], which we are implementing in this sample. The setting `datastax-java-driver.advanced.ssl-engine-factory.hostname-validation` has been set to `false` due to a known issue - see [here](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/develop/java-driver-4/package/KNOWN_ISSUES.md#hostname-verification-fails-when-accessing-a-multi-region-cosmos-cassandra-api-instance) (this will be fixed before the extension exits beta). Also note that `reference.conf` defines various connection settings that we recommend for a good experience using Cassandra API. You will notice a preferred write region and read region have been defined in `application.conf`. For illustration in this sample, the account is initially created in UK South (which becomes the write region), and then Australia East is chosen as an additional read region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the write region.
+Note that `application.conf` contains settings that override [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/develop/java-driver-4/driver-4/src/main/resources/reference.conf) in the [Azure Cosmos DB extension for Cassandra API], which we are implementing in this sample. The setting `datastax-java-driver.advanced.ssl-engine-factory.hostname-validation` has been set to `false` due to a known issue - see [here](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/develop/java-driver-4/driver-4/KNOWN_ISSUES.md#known-issues). Also note that `reference.conf` defines various connection settings that we recommend for a good experience using Cassandra API. You will notice a preferred-regions have been defined in `application.conf`. For illustration in this sample, the account is initially created in UK South, and then Australia East is chosen as an additional region, where UK South is very close to the client code. You can choose any two regions with a similar distance between them, where the client is deployed very close to the first (primary) 
+region.
 
    ![Console output](./media/regions.png)
 
-1. Run `mvn clean package` from java-examples folder to build the project. This will generate azure-cosmos-cassandra-examples-1.1.3.jar under target folder.
+1. Run `mvn clean package` from java-examples folder to build the project. This will generate azure-cosmos-cassandra-examples-1.1.2.jar under target folder.
  
-1. Run `java -jar target/azure-cosmos-cassandra-examples-1.1.3.jar` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
+2. Run `java -jar target/azure-cosmos-cassandra-examples-1.1.2.jar` in a terminal to start your java application. This will create a keyspace and user table, and then run a load test with many concurrent threads attempting to force rate limiting (429) errors in the database. The test will also collect the ids of all the records and then read them back sequentially, measuring the latency. The output will include a report of the average latencies for both reads and writes. The "users in table" and "inserts attempted" should be identical since rate limiting has been successfully handled. Notice that although requests are all successful, you may see significant "average latency" of writes due to requests being retried after rate limiting. You should also see a high latency for reads as the read region (in this case Australia East) is much further away.
 
    ![Console output](./media/output.png)
 
@@ -86,24 +76,15 @@ Note that `application.conf` contains settings that override [reference.conf](ht
         public static final int NUMBER_OF_THREADS = 40;
     ```
 
-1. To improve the read latency for our UK South client application instance, we can change the `read-datacenter` parameter (implemented by the load balancing policy in the extension) within `application.conf` to make sure that reads are served from the region local to the application. Of course, for the application instance that is running in Australia East, the settings would stay as Australia East, to ensure that each client is communicating with the closest region:
-
-    ```conf
-          # Datacenter for read operations
-          read-datacenter = "UK South"
-          # Datacenter for write operations
-          write-datacenter = "UK South"
-    ```
-
-1. Run the application again and you should observe lower read latencies.
+3. Run the application again and you should observe lower read latencies.
 
    ![Console output](./media/local-read-output.png)
 
  
-Bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/4.11/manual/query_builder/idempotence/), with respect to the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/4.11/manual/core/retries/). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
+Bear in mind that when writing data to Cassandra, you should ensure that you account for [query idempotence](https://docs.datastax.com/en/developer/java-driver/latest/manual/query_builder/idempotence/), with respect to the relevant rules for [retries](https://docs.datastax.com/en/developer/java-driver/latest/manual/core/retries/). You should always perform sufficient load testing to ensure that the implementation meets your requirements.
 
 ## About the code
-The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/release/java-driver-4/0.1.0-beta.1/package/src/main/resources/reference.conf) of the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/0.1.0-beta.1). You can also override these in `src/main/resources/application.conf` within this sample:
+The code included in this sample is a load test to simulate a scenario where Cosmos DB will rate limit requests (return a 429 error) because there are too many requests for the [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) in the service. The retry policy handles errors such as OverLoadedException (which may occur due to rate limiting), and uses an exponential growing back-off scheme for retries. The time between retries is increased by a growing back off time (default: 1000 ms) on each retry, unless maxRetryCount is -1, in which case it backs off with a fixed duration. It is important to handle rate limiting in Azure Cosmos DB to prevent errors when [provisioned throughput](https://docs.microsoft.com/azure/cosmos-db/how-to-provision-container-throughput) has been exhausted. The parameters (maxRetryCount, growingBackOffTimeMillis, fixedBackOffTimeMillis) for retry policy are defined within [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/develop/java-driver-4/driver-4/src/main/resources/reference.conf) of the [Azure Cosmos DB extension for Cassandra API](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/develop/java-driver-4). You can also override these in `src/main/resources/application.conf` within this sample:
 
 ```conf
     retry-policy {
@@ -117,39 +98,27 @@ The code included in this sample is a load test to simulate a scenario where Cos
 ```
 
 
-In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The `loadTest()` will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is referenced in [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/release/java-driver-4/0.1.0-beta.1/package/src/main/resources/reference.conf) of the [Azure Cosmos DB extension for Cassandra API], and the values for `global-endpoint`, `read-datacenter`, and `write-datacenter` are overriden in `src/main/resources/application.conf` within this sample:
+In this sample, we create a Keyspace and table, and run a multi-threaded process that will insert users concurrently into the user table. To help generate random data for users, we use a java library called "javafaker", which is included in the build dependencies. The `loadTest()` will eventually exhaust the provisioned Keyspace RU allocation (default is 400RUs). After the writes have finished, we read all of the records written to the database and measure the latencies. This is intended to illustrate the difference between using a preferred local read region in the load balancing policy vs a default region that might be further away from your client application. The class for load balancing policy is referenced in [reference.conf](https://github.com/Azure/azure-cosmos-cassandra-extensions/blob/develop/java-driver-4/driver-4/src/main/resources/reference.conf) of the [Azure Cosmos DB extension for Cassandra API], and the values for `multi-region-writes` and `preferred-regions` are overriden in `src/main/resources/application.conf` within this sample:
 
 ```conf
     load-balancing-policy {
-
       # Cosmos load balancing policy parameters
-      #
-      #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
-      #   Writes will go to the default write region when global-endpoint is specified. When global-endpoint is not
-      #   specified, you must specify values for read-datacenter and write-datacenter.
       #
       #   Update this file or run this example with these system properties set to override the values provided here:
       #
-      #   -Ddatastax-java-driver.basic.load-balancing-policy.global-endpoint=[<global-endpoint>|""]
-      #   -DDdatastax-java-driver.basic.load-balancing-policy.read-datacenter=[<read-datacenter>|""]
-      #   -DDdatastax-java-driver.basic.load-balancing-policy.write-datacenter=[<write-datacenter>|""]
+      #   -Ddatastax-java-driver.basic.load-balancing-policy.multi-region-writes=[true|false]
+      #   -DDdatastax-java-driver.basic.load-balancing-policy.preferred-regions=[<preferred-regions>]
       #
       #   Alternatively, set the environment variables referenced here to match the topology and preferences for your
       #   Cosmos DB Cassandra API instance.
-
-      multi-region-writes = false
-      global-endpoint = ""
-      read-datacenter = "Australia East"
-      write-datacenter = "UK South"
+      multi-region-writes = true
       preferred-regions = ["Australia East", "UK West"]
     }
 ```
 
 ## Failover scenarios
 
-As illustrated above, the load balancing policy implemented in this sample (see [Cosmos Cassandra Extensions](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.1.3)) includes a feature that allows you to specify a `read-datacenter` and `write-datacenter` for application level load balancing. Specifying these options will route read and write requests to their corresponding data centers in either case. 
-
-If `read-datacenter` is specified, the policy prioritizes that region for read requests. Either one of `write-datacenter` or `global-endpoint` needs to be specified in order to determine the data center for write requests. If `write-datacenter` is specified, writes will be prioritized for that region. When `global-endpoint` is specified, the write requests will be prioritized for the default write region.
+As illustrated above, the load balancing policy implemented in this sample (see [Cosmos Cassandra Extensions](https://github.com/Azure/azure-cosmos-cassandra-extensions/tree/release/java-driver-4/1.1.2)) includes a feature that allows you to specify a `multi-region-writes` and `preferred-regions` for application level load balancing. Specifying these options will route read and write requests to their corresponding data centers in either case. 
 
 ### Preferred regions
 

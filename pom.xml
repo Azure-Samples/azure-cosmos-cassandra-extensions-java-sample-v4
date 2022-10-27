@@ -199,7 +199,7 @@ Licensed under the MIT License.
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
           <configLocation>azure-cosmos.checkstyle.xml</configLocation>
-          <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
+          <propertyExpansion>samedir=${project.parent.basedir}</propertyExpansion>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
