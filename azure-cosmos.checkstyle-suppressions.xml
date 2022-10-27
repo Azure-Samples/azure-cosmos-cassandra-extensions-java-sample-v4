@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE suppressions PUBLIC
-    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
-    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
-<suppressions>
-  <!-- Code was copied from Google Guava and uses their license instead of the Microsoft one. -->
-  <suppress checks="Header" files="driver-4/src/main/java/com/azure/cosmos/cassandra/implementation/Utf8.java"/>
-</suppressions>
