@@ -55,6 +55,8 @@ Licensed under the MIT License.
     <!-- Test dependency versions -->
     <version.assertj-core>3.23.1</version.assertj-core>
     <version.junit-jupiter>5.9.1</version.junit-jupiter>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
   </properties>
 
   <dependencies>
