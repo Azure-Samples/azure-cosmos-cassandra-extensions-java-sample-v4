@@ -98,12 +98,12 @@ Licensed under the MIT License.
         </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.1.2</version>
+          <version>3.2.0</version>
           <dependencies>
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.42</version>
+              <version>10.3.4</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -171,8 +171,8 @@ Licensed under the MIT License.
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
-          <configLocation>azure-cosmos-style.xml</configLocation>
-          <propertyExpansion>samedir=${project.basedir}</propertyExpansion>
+          <configLocation>azure-cosmos.checkstyle.xml</configLocation>
+          <propertyExpansion>samedir=${project.parent.basedir}</propertyExpansion>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <linkXRef>false</linkXRef>
