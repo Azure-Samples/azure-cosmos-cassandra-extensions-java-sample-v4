@@ -166,8 +166,7 @@ public class ApplicationCommandLineRunnerTest {
     /**
      * Creates the azure_cosmos_cassandra_driver_4_examples keyspace, if it does not already exist.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
-        justification = "False alarm on Java 11+")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @BeforeEach
     public void createKeyspaceIfNotExists() {
@@ -206,8 +205,7 @@ public class ApplicationCommandLineRunnerTest {
      * <p>
      * This is done in a {@link CqlSession CqlSession} created for the task.
      */
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
-        justification = "False alarm on Java 11+")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @AfterAll
     public static void dropTableIfExists() {
@@ -225,6 +223,7 @@ public class ApplicationCommandLineRunnerTest {
      *
      * @param multiRegionWrites {@code true} if multi-region writes should be enabled; otherwise {@code false}.
      */
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "False alarm on Java 11+")
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     public void run(final boolean multiRegionWrites) {
