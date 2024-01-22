@@ -122,24 +122,8 @@ In this sample, we create a Keyspace and table, and run a multi-threaded process
     load-balancing-policy {
 
       # Cosmos load balancing policy parameters
-      #
-      #   When global-endpoint is specified, you may specify a read-datacenter, but must not specify a write-datacenter.
-      #   Writes will go to the default write region when global-endpoint is specified. When global-endpoint is not
-      #   specified, you must specify values for read-datacenter and write-datacenter.
-      #
-      #   Update this file or run this example with these system properties set to override the values provided here:
-      #
-      #   -Ddatastax-java-driver.basic.load-balancing-policy.global-endpoint=[<global-endpoint>|""]
-      #   -DDdatastax-java-driver.basic.load-balancing-policy.read-datacenter=[<read-datacenter>|""]
-      #   -DDdatastax-java-driver.basic.load-balancing-policy.write-datacenter=[<write-datacenter>|""]
-      #
-      #   Alternatively, set the environment variables referenced here to match the topology and preferences for your
-      #   Cosmos DB Cassandra API instance.
 
       multi-region-writes = false
-      global-endpoint = ""
-      read-datacenter = "Australia East"
-      write-datacenter = "UK South"
       preferred-regions = ["Australia East", "UK West"]
     }
 ```
